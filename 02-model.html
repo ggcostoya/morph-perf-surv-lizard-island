@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>2. Model – Morphology, performance &amp; survival</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-dd04dde2c6745c4a1a46a7eeaefc632c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./02-model.html">2. Model</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Morphology, performance &amp; survival</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Start here</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">1. Data</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-model.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">2. Model</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-validation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">3. Validation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-fit.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">4. Fit</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-synthesis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">5. Synthesis</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./about.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">About</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#causal-diagram" id="toc-causal-diagram" class="nav-link active" data-scroll-target="#causal-diagram">Causal diagram</a></li>
+  <li><a href="#transformations" id="toc-transformations" class="nav-link" data-scroll-target="#transformations">Transformations</a></li>
+  <li><a href="#notation" id="toc-notation" class="nav-link" data-scroll-target="#notation">Notation</a></li>
+  <li><a href="#performance-submodel" id="toc-performance-submodel" class="nav-link" data-scroll-target="#performance-submodel">Performance submodel</a></li>
+  <li><a href="#survival-and-detection-submodel" id="toc-survival-and-detection-submodel" class="nav-link" data-scroll-target="#survival-and-detection-submodel">Survival and detection submodel</a></li>
+  <li><a href="#derived-quantities" id="toc-derived-quantities" class="nav-link" data-scroll-target="#derived-quantities">Derived quantities</a></li>
+  <li><a href="#priors" id="toc-priors" class="nav-link" data-scroll-target="#priors">Priors</a>
+  <ul class="collapse">
+  <li><a href="#hierarchical-structure" id="toc-hierarchical-structure" class="nav-link" data-scroll-target="#hierarchical-structure">Hierarchical structure</a></li>
+  <li><a href="#prior-distributions" id="toc-prior-distributions" class="nav-link" data-scroll-target="#prior-distributions">Prior distributions</a></li>
+  </ul></li>
+  <li><a href="#assumptions-and-limitations" id="toc-assumptions-and-limitations" class="nav-link" data-scroll-target="#assumptions-and-limitations">Assumptions and limitations</a></li>
+  <li><a href="#stan-code" id="toc-stan-code" class="nav-link" data-scroll-target="#stan-code">Stan code</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/ggcostoya/morph-perf-surv-lizard-island/blob/main/02-model.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/ggcostoya/morph-perf-surv-lizard-island/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">2. Model</h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li><li><hr class="dropdown-divider"></li><li><a id="quarto-view-source" class="dropdown-item" href="javascript:void(0)" role="button">View Source</a></li></ul></div></div>
+<p class="subtitle lead">Causal structure, full specification, priors and Stan code</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>lizards <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/lizards-spring-2024.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>n_missing_morph <span class="ot">&lt;-</span> <span class="fu">sum</span>(lizards<span class="sc">$</span>exclusion <span class="sc">==</span> <span class="st">"missing morphology"</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>The model estimates both links of the paradigm jointly, morphology → performance and performance → survival, while correcting survival for imperfect detection. The choices behind the data inputs are explained on the <a href="./01-data.html">Data page</a>. A <a href="02-model.pdf">PDF version</a> of this page is also available.</p>
+<section id="causal-diagram" class="level2">
+<h2 class="anchored" data-anchor-id="causal-diagram">Causal diagram</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/causal-diagram.svg" class="img-fluid figure-img" style="width:100.0%"></p>
+<figcaption>Causal structure of the model. Solid arrows are present in both models. The dashed arrow (direct effects <span class="math inline">\(\gamma\)</span>) is present only in M2. Sex affects performance (<span class="math inline">\(\delta\)</span>), survival (<span class="math inline">\(c\)</span>) and detection (<span class="math inline">\(\zeta\)</span>). Body temperature at the trial affects sprint and bite (<span class="math inline">\(t\)</span>).</figcaption>
+</figure>
+</div>
+</section>
+<section id="transformations" class="level2">
+<h2 class="anchored" data-anchor-id="transformations">Transformations</h2>
+<p>All continuous variables except body temperature are log-transformed. All, including temperature, are then standardised within species, using that species’ observed sample mean and SD: <span class="math display">\[
+\operatorname{std}_s(v) = \frac{v - \bar{v}_s}{\operatorname{sd}_s(v)}.
+\]</span> Coefficients are then in within-species SD units, and so comparable among species and traits. Survival coefficients become standardised selection gradients (on the logit scale), and one set of generic priors can be used. The constants <span class="math inline">\(\bar v_s\)</span> and <span class="math inline">\(\operatorname{sd}_s(v)\)</span> are fixed data, so the simulator used for calibration applies the identical transformation (<code>prepare_data()</code> in <code>R/prepare-data.R</code>).</p>
+</section>
+<section id="notation" class="level2">
+<h2 class="anchored" data-anchor-id="notation">Notation</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(i = 1, \dots, N\)</span></td>
+<td>individual</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(s = s[i] \in \{\text{caro}, \text{cris}, \text{sag}\}\)</span></td>
+<td>species of individual <span class="math inline">\(i\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(j \in \{\text{spr}, \text{bite}, \text{bark}, \text{leaf}\}\)</span></td>
+<td>performance trait</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(k \in \{\text{svl}, \text{hl}, \text{hw}, \text{toe}, \text{pad}\}\)</span></td>
+<td>morphological predictor</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(k(j)\)</span></td>
+<td>shape trait linked to <span class="math inline">\(j\)</span>: <span class="math inline">\(k(\text{spr}) = \text{hl}\)</span>, <span class="math inline">\(k(\text{bite}) = \text{hw}\)</span>, <span class="math inline">\(k(\text{bark}) = \text{toe}\)</span>, <span class="math inline">\(k(\text{leaf}) = \text{pad}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(m_i \in \{0, 1\}\)</span></td>
+<td>male indicator (female = 0)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(x_{ik}\)</span></td>
+<td>standardised morphological predictor (data)</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(w_{ij}\)</span></td>
+<td>standardised body temperature at the trial for <span class="math inline">\(j\)</span> (data; 0 for bark and leaf)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(u_{ij}\)</span></td>
+<td>standardised log performance (data, or latent if missing)</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(z_i \in \{0, 1\}\)</span></td>
+<td>alive at the fall 2024 census (latent)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(y_{i2}, y_{i3} \in \{0, 1\}\)</span></td>
+<td>seen in fall 2024 / spring 2025</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="performance-submodel" class="level2">
+<h2 class="anchored" data-anchor-id="performance-submodel">Performance submodel</h2>
+<p>Each lizard’s vector of the four performance traits is multivariate normal: <span class="math display">\[
+\mathbf{u}_i \sim \operatorname{MVN}\left(\boldsymbol{\mu}_i, \boldsymbol{\Sigma}_{s[i]}\right),
+\qquad
+\boldsymbol{\Sigma}_s = \operatorname{diag}(\boldsymbol{\sigma}_s)\, \boldsymbol{\Omega}\, \operatorname{diag}(\boldsymbol{\sigma}_s),
+\]</span> with a mean that depends on size, the linked shape trait, sex and body temperature: <span class="math display">\[
+\mu_{ij} = \alpha_{sj} + \delta_{sj}\, m_i + b^{\text{svl}}_{sj}\, x_{i,\text{svl}} + b^{\text{shape}}_{sj}\, x_{i,k(j)} + t_{sj}\, w_{ij}.
+\]</span></p>
+<ul>
+<li><span class="math inline">\(\alpha_{sj}\)</span> is the expected performance of a female of average size and shape, tested at the species’ mean temperature.</li>
+<li><span class="math inline">\(t_{sj}\)</span> is the effect of body temperature during the trial. It is estimated for sprint and bite only, and fixed at 0 for both clinging traits. Temperature is a condition of the trial, not a trait of the lizard. Survival therefore depends on temperature-adjusted performance, <span class="math inline">\(\tilde u_{ij} = u_{ij} - t_{sj}\, w_{ij}\)</span>: the lizard’s expected performance at its species’ mean test temperature.</li>
+<li><span class="math inline">\(\delta_{sj}\)</span> is the male–female difference in performance not explained by morphology.</li>
+<li><span class="math inline">\(b^{\text{svl}}_{sj}\)</span> and <span class="math inline">\(b^{\text{shape}}_{sj}\)</span> are the size and shape effects on performance (the first link of the paradigm).</li>
+<li><span class="math inline">\(\boldsymbol{\Omega}\)</span> is a residual correlation matrix shared across species. It captures lizards that perform well on all tasks for reasons beyond the measured morphology, such as condition or motivation.</li>
+<li>Missing <span class="math inline">\(u_{ij}\)</span> are parameters drawn from the same distribution, so lizards with missing performance still contribute their survival information. This assumes values are missing at random given morphology, sex and the other performance traits.</li>
+<li>Leaf-clinging zeros are left-censored. For those lizards, <span class="math inline">\(u_{i,\text{leaf}}\)</span> is also a parameter, but it is constrained to lie below the detection limit, <span class="math display">\[
+u_{i,\text{leaf}} &lt; c_s = \operatorname{std}_s(\log 0.01),
+\]</span> and follows the same multivariate normal distribution. They therefore count as the weakest leaf clingers, rather than being dropped or given an arbitrary value. The standardisation constants for leaf clinging are computed from the non-zero values.</li>
+</ul>
+</section>
+<section id="survival-and-detection-submodel" class="level2">
+<h2 class="anchored" data-anchor-id="survival-and-detection-submodel">Survival and detection submodel</h2>
+<p>The probability of surviving the first six months depends on temperature-adjusted performance: <span class="math display">\[
+z_i \sim \operatorname{Bernoulli}(\phi_i),
+\]</span> <span class="math display">\[
+\operatorname{logit}(\phi_i) = a_s + c_s\, m_i + \sum_j \beta_{sj}\, \tilde u_{ij} + \sum_j q_{sj}\, \tilde u_{ij}^2 \;\left[\, + \sum_k \gamma_{sk}\, x_{ik} \,\right]_{\text{M2 only}}.
+\]</span></p>
+<ul>
+<li><span class="math inline">\(a_s\)</span> is the logit 6-month survival of an average female.</li>
+<li><span class="math inline">\(c_s\)</span> is the sex difference in survival.</li>
+<li><span class="math inline">\(\beta_{sj}\)</span> is linear selection on performance <span class="math inline">\(j\)</span>, and <span class="math inline">\(q_{sj}\)</span> is quadratic selection. <span class="math inline">\(q &lt; 0\)</span> is stabilising and <span class="math inline">\(q &gt; 0\)</span> disruptive. The conventional quadratic gradient is <span class="math inline">\(2q_{sj}\)</span>.</li>
+<li><span class="math inline">\(\gamma_{sk}\)</span> is the direct effect of morphology on survival. It is fixed at 0 in M1. Including <span class="math inline">\(x_{i,\text{svl}}\)</span> here guards against attributing size-related survival to performance.</li>
+<li>Correlational selection (<span class="math inline">\(\tilde u_{ij} \tilde u_{ij'}\)</span> terms) is not included.</li>
+</ul>
+<p>Resighting depends on whether the lizard is alive: <span class="math display">\[
+y_{i2} \sim \operatorname{Bernoulli}(z_i\, p_i), \qquad \operatorname{logit}(p_i) = \pi_s + \zeta_p\, m_i,
+\]</span> <span class="math display">\[
+y_{i3} \sim \operatorname{Bernoulli}(z_i\, \lambda_i), \qquad \operatorname{logit}(\lambda_i) = \ell_s + \zeta_\lambda\, m_i.
+\]</span></p>
+<ul>
+<li><span class="math inline">\(p_i\)</span> is the probability of detection in fall given the lizard is alive.</li>
+<li><span class="math inline">\(\lambda_i\)</span> is the probability of being seen in spring 2025 given the lizard was alive in fall. It combines fall-to-spring survival and spring detection, which three occasions cannot separate. It is a nuisance parameter.</li>
+<li>The sex effects on detection, <span class="math inline">\(\zeta_p\)</span> and <span class="math inline">\(\zeta_\lambda\)</span>, are shared across species. Males display and may be more conspicuous.</li>
+</ul>
+<p>This is a Cormack–Jolly–Seber model for three occasions. Summing over the latent <span class="math inline">\(z_i\)</span> gives the likelihood of each history:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>History <span class="math inline">\((y_{i2}, y_{i3})\)</span></th>
+<th>Probability</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1 1</td>
+<td><span class="math inline">\(\phi_i\, p_i\, \lambda_i\)</span></td>
+</tr>
+<tr class="even">
+<td>0 1</td>
+<td><span class="math inline">\(\phi_i\, (1 - p_i)\, \lambda_i\)</span></td>
+</tr>
+<tr class="odd">
+<td>1 0</td>
+<td><span class="math inline">\(\phi_i\, p_i\, (1 - \lambda_i)\)</span></td>
+</tr>
+<tr class="even">
+<td>0 0</td>
+<td><span class="math inline">\((1 - \phi_i) + \phi_i\, (1 - p_i)(1 - \lambda_i)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Lizards seen in spring 2025 but missed in fall (history 01) identify <span class="math inline">\(p\)</span>. Selection on 6-month survival (<span class="math inline">\(\phi\)</span>) is then estimated free of detection bias. This assumes detection does not depend on performance or morphology beyond sex.</p>
+</section>
+<section id="derived-quantities" class="level2">
+<h2 class="anchored" data-anchor-id="derived-quantities">Derived quantities</h2>
+<p>For morphological predictor <span class="math inline">\(k\)</span> in species <span class="math inline">\(s\)</span>, evaluated at the species mean, where <span class="math inline">\(\tilde u = 0\)</span> so the quadratic terms vanish: <span class="math display">\[
+\text{indirect}_{sk} = \sum_{j} b_{sjk}\, \beta_{sj},
+\qquad
+\text{direct}_{sk} = \gamma_{sk},
+\qquad
+\text{total}_{sk} = \text{indirect}_{sk} + \text{direct}_{sk}.
+\]</span> Here <span class="math inline">\(b_{sjk}\)</span> is <span class="math inline">\(b^{\text{svl}}_{sj}\)</span> for <span class="math inline">\(k = \text{svl}\)</span>, <span class="math inline">\(b^{\text{shape}}_{sj}\)</span> when <span class="math inline">\(k = k(j)\)</span>, and 0 otherwise. Size is the only predictor with indirect paths through all four performance traits. Support for full mediation is assessed in three ways: from the posteriors of <span class="math inline">\(\gamma_{sk}\)</span>, by comparing M1 and M2 with PSIS-LOO, and by checking in simulation (<a href="./03-validation.html">Validation</a>) whether the design can detect <span class="math inline">\(\gamma \neq 0\)</span>.</p>
+</section>
+<section id="priors" class="level2">
+<h2 class="anchored" data-anchor-id="priors">Priors</h2>
+<section id="hierarchical-structure" class="level3">
+<h3 class="anchored" data-anchor-id="hierarchical-structure">Hierarchical structure</h3>
+<p>Every parameter labelled hierarchical below varies by species and is partially pooled: <span class="math display">\[
+\theta_s = \mu_\theta + \tau_\theta\, \tilde\theta_s, \qquad \tilde\theta_s \sim \mathcal{N}(0, 1),
+\]</span> with separate <span class="math inline">\(\mu_\theta\)</span> and <span class="math inline">\(\tau_\theta\)</span> for each performance trait <span class="math inline">\(j\)</span> or predictor <span class="math inline">\(k\)</span>. This is the non-centered form used in Stan. With only three species, <span class="math inline">\(\tau_\theta\)</span> is weakly identified, so its priors are deliberately informative.</p>
+</section>
+<section id="prior-distributions" class="level3">
+<h3 class="anchored" data-anchor-id="prior-distributions">Prior distributions</h3>
+<p>All scales are standardised traits or logits. <span class="math inline">\(\mathcal{N}^+\)</span> is the half-normal distribution.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Parameter</th>
+<th>Pooling</th>
+<th>Prior</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Performance</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\alpha_{sj}\)</span></td>
+<td>none</td>
+<td><span class="math inline">\(\mathcal{N}(0, 0.5)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\delta_{sj}\)</span></td>
+<td>hierarchical</td>
+<td><span class="math inline">\(\mu \sim \mathcal{N}(0, 1)\)</span>, <span class="math inline">\(\tau \sim \mathcal{N}^+(0, 0.5)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(b^{\text{svl}}_{sj}\)</span></td>
+<td>hierarchical</td>
+<td><span class="math inline">\(\mu \sim \mathcal{N}(0, 0.5)\)</span>, <span class="math inline">\(\tau \sim \mathcal{N}^+(0, 0.25)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(b^{\text{shape}}_{sj}\)</span></td>
+<td>hierarchical</td>
+<td><span class="math inline">\(\mu \sim \mathcal{N}(0, 0.5)\)</span>, <span class="math inline">\(\tau \sim \mathcal{N}^+(0, 0.25)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(t_{sj}\)</span> (sprint, bite)</td>
+<td>hierarchical</td>
+<td><span class="math inline">\(\mu \sim \mathcal{N}(0, 0.5)\)</span>, <span class="math inline">\(\tau \sim \mathcal{N}^+(0, 0.25)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\sigma_{sj}\)</span></td>
+<td>none</td>
+<td><span class="math inline">\(\mathcal{N}^+(0, 1)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\boldsymbol{\Omega}\)</span></td>
+<td>shared</td>
+<td><span class="math inline">\(\operatorname{LKJ}(2)\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Survival</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(a_s\)</span></td>
+<td>hierarchical</td>
+<td><span class="math inline">\(\mu \sim \mathcal{N}(-1, 1)\)</span>, <span class="math inline">\(\tau \sim \mathcal{N}^+(0, 0.5)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(c_s\)</span></td>
+<td>hierarchical</td>
+<td><span class="math inline">\(\mu \sim \mathcal{N}(0, 1)\)</span>, <span class="math inline">\(\tau \sim \mathcal{N}^+(0, 0.5)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\beta_{sj}\)</span></td>
+<td>hierarchical</td>
+<td><span class="math inline">\(\mu \sim \mathcal{N}(0, 0.5)\)</span>, <span class="math inline">\(\tau \sim \mathcal{N}^+(0, 0.25)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(q_{sj}\)</span></td>
+<td>hierarchical</td>
+<td><span class="math inline">\(\mu \sim \mathcal{N}(0, 0.25)\)</span>, <span class="math inline">\(\tau \sim \mathcal{N}^+(0, 0.1)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\gamma_{sk}\)</span> (M2)</td>
+<td>hierarchical</td>
+<td><span class="math inline">\(\mu \sim \mathcal{N}(0, 0.5)\)</span>, <span class="math inline">\(\tau \sim \mathcal{N}^+(0, 0.25)\)</span></td>
+</tr>
+<tr class="odd">
+<td><strong>Detection</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\pi_s\)</span></td>
+<td>hierarchical</td>
+<td><span class="math inline">\(\mu \sim \mathcal{N}(0, 1.5)\)</span>, <span class="math inline">\(\tau \sim \mathcal{N}^+(0, 1)\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\ell_s\)</span></td>
+<td>hierarchical</td>
+<td><span class="math inline">\(\mu \sim \mathcal{N}(0, 1.5)\)</span>, <span class="math inline">\(\tau \sim \mathcal{N}^+(0, 1)\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\zeta_p\)</span>, <span class="math inline">\(\zeta_\lambda\)</span></td>
+<td>shared</td>
+<td><span class="math inline">\(\mathcal{N}(0, 1)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The reasoning behind these priors:</p>
+<ul>
+<li><strong>Performance intercepts <span class="math inline">\(\alpha_{sj}\)</span></strong> are near 0 by construction, because traits are centred within species. They are offset only by the sex term, so pooling them adds nothing. A first version used <span class="math inline">\(\mathcal{N}(0, 1)\)</span>, but prior predictive simulation showed it allowed implausible shifts in performance, for example leaf censoring rates above 30% when about 3% is observed. It was tightened to <span class="math inline">\(\mathcal{N}(0, 0.5)\)</span>.</li>
+<li><strong>Performance slopes</strong> of <span class="math inline">\(\mathcal{N}(0, 0.5)\)</span> put 95% of the mass below about 1 SD of performance per SD of morphology.</li>
+<li><strong>Residual SDs</strong> <span class="math inline">\(\sigma_{sj}\)</span> must lie below 1, because performance is standardised.</li>
+<li><strong>Baseline survival</strong> <span class="math inline">\(\mu_a \sim \mathcal{N}(-1, 1)\)</span> centres 6-month survival near 27%. That is a little above the naive 20%, as expected once detection is accounted for.</li>
+<li><strong>Selection gradients</strong> of <span class="math inline">\(\mathcal{N}(0, 0.5)\)</span> allow odds of survival to change up to about 2.7-fold per SD of performance (2 prior SDs). The quadratic terms are tighter.</li>
+<li><strong>Detection intercepts</strong> of <span class="math inline">\(\mathcal{N}(0, 1.5)\)</span> are close to uniform on the probability scale.</li>
+</ul>
+<p>Prior predictive checks of these priors are on the <a href="./03-validation.html">Validation page</a>.</p>
+</section>
+</section>
+<section id="assumptions-and-limitations" class="level2">
+<h2 class="anchored" data-anchor-id="assumptions-and-limitations">Assumptions and limitations</h2>
+<ul>
+<li><strong>Performance and morphology are measured without error.</strong> Sprint timing resolution violates this mildly.</li>
+<li><strong>Missing data.</strong> Performance is missing at random given the model. The 17 lizards with missing toepad area or hind toe length are excluded. Only one of them survived to 6 months.</li>
+<li><strong>Detection</strong> depends on species and sex only. Movement off the study area is indistinguishable from death, so <span class="math inline">\(\phi\)</span> is <em>apparent</em> survival.</li>
+<li><strong>Shared residual correlation.</strong> The correlation among performance traits, <span class="math inline">\(\boldsymbol{\Omega}\)</span>, is the same for all species.</li>
+<li><strong>Temperature.</strong> Its effect on performance is linear, and it is unmeasured for both clinging trials.</li>
+<li><strong>Claw size.</strong> Relative hind toe length is a stand-in for claw size.</li>
+<li><strong>No correlational selection.</strong> It could be added as an extension.</li>
+<li><strong>Three species.</strong> Among-species variances are estimated mostly from their priors.</li>
+</ul>
+</section>
+<section id="stan-code" class="level2">
+<h2 class="anchored" data-anchor-id="stan-code">Stan code</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>In progress
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The Stan implementation will be added here. It will read the same priors as the simulator (<code>R/priors.R</code>) and use one flag to switch between M1 and M2.</p>
+</div>
+</div>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "2. Model"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Causal structure, full specification, priors and Stan code"</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="an">format-links:</span><span class="co"> false</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">  html: default</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">  typst:</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">    papersize: us-letter</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">    fontsize: 10.5pt</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">    section-numbering: "1.1"</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">    echo: false</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">#| label: setup</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>lizards <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/lizards-spring-2024.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>n_missing_morph <span class="ot">&lt;-</span> <span class="fu">sum</span>(lizards<span class="sc">$</span>exclusion <span class="sc">==</span> <span class="st">"missing morphology"</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>The model estimates both links of the paradigm jointly, morphology →</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>performance and performance → survival, while correcting survival for</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>imperfect detection. The choices behind the data inputs are explained on</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>the <span class="co">[</span><span class="ot">Data page</span><span class="co">](01-data.qmd)</span>. A <span class="co">[</span><span class="ot">PDF version</span><span class="co">](02-model.pdf)</span> of this</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>page is also available.</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="fu">## Causal diagram</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a><span class="al">![Causal structure of the model. Solid arrows are present in both models. The dashed arrow (direct effects $\gamma$) is present only in M2. Sex affects performance ($\delta$), survival ($c$) and detection ($\zeta$). Body temperature at the trial affects sprint and bite ($t$).](figures/causal-diagram.svg)</span>{width=100%}</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="fu">## Transformations</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>All continuous variables except body temperature are log-transformed.</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>All, including temperature, are then standardised within species,</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>using that species' observed sample mean and SD:</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>\operatorname{std}_s(v) = \frac{v - \bar{v}_s}{\operatorname{sd}_s(v)}.</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>Coefficients are then in within-species SD units, and so comparable</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>among species and traits. Survival coefficients become standardised</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>selection gradients (on the logit scale), and one set of generic</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>priors can be used. The constants $\bar v_s$ and $\operatorname{sd}_s(v)$</span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>are fixed data, so the simulator used for calibration applies the identical</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>transformation (<span class="in">`prepare_data()`</span> in <span class="in">`R/prepare-data.R`</span>).</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="fu">## Notation</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Symbol <span class="pp">|</span> Meaning <span class="pp">|</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $i = 1, \dots, N$ <span class="pp">|</span> individual <span class="pp">|</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $s = s<span class="co">[</span><span class="ot">i</span><span class="co">]</span> \in <span class="sc">\{</span>\text{caro}, \text{cris}, \text{sag}<span class="sc">\}</span>$ <span class="pp">|</span> species of individual $i$ <span class="pp">|</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $j \in <span class="sc">\{</span>\text{spr}, \text{bite}, \text{bark}, \text{leaf}<span class="sc">\}</span>$ <span class="pp">|</span> performance trait <span class="pp">|</span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $k \in <span class="sc">\{</span>\text{svl}, \text{hl}, \text{hw}, \text{toe}, \text{pad}<span class="sc">\}</span>$ <span class="pp">|</span> morphological predictor <span class="pp">|</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $k(j)$ <span class="pp">|</span> shape trait linked to $j$: $k(\text{spr}) = \text{hl}$, $k(\text{bite}) = \text{hw}$, $k(\text{bark}) = \text{toe}$, $k(\text{leaf}) = \text{pad}$ <span class="pp">|</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $m_i \in <span class="sc">\{</span>0, 1<span class="sc">\}</span>$ <span class="pp">|</span> male indicator (female = 0) <span class="pp">|</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $x_{ik}$ <span class="pp">|</span> standardised morphological predictor (data) <span class="pp">|</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $w_{ij}$ <span class="pp">|</span> standardised body temperature at the trial for $j$ (data; 0 for bark and leaf) <span class="pp">|</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $u_{ij}$ <span class="pp">|</span> standardised log performance (data, or latent if missing) <span class="pp">|</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $z_i \in <span class="sc">\{</span>0, 1<span class="sc">\}</span>$ <span class="pp">|</span> alive at the fall 2024 census (latent) <span class="pp">|</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $y_{i2}, y_{i3} \in <span class="sc">\{</span>0, 1<span class="sc">\}</span>$ <span class="pp">|</span> seen in fall 2024 / spring 2025 <span class="pp">|</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a><span class="fu">## Performance submodel</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>Each lizard's vector of the four performance traits is multivariate</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>normal:</span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>\mathbf{u}_i \sim \operatorname{MVN}\left(\boldsymbol{\mu}_i, \boldsymbol{\Sigma}_{s<span class="co">[</span><span class="ot">i</span><span class="co">]</span>}\right),</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>\boldsymbol{\Sigma}_s = \operatorname{diag}(\boldsymbol{\sigma}_s)\, \boldsymbol{\Omega}\, \operatorname{diag}(\boldsymbol{\sigma}_s),</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>with a mean that depends on size, the linked shape trait, sex and body</span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>temperature:</span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>\mu_{ij} = \alpha_{sj} + \delta_{sj}\, m_i + b^{\text{svl}}_{sj}\, x_{i,\text{svl}} + b^{\text{shape}}_{sj}\, x_{i,k(j)} + t_{sj}\, w_{ij}.</span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\alpha_{sj}$ is the expected performance of a female of average size</span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>  and shape, tested at the species' mean temperature.</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$t_{sj}$ is the effect of body temperature during the trial. It is</span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>  estimated for sprint and bite only, and fixed at 0 for both</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>  clinging traits.</span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>  Temperature is a condition of the trial, not a trait of the lizard.</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>  Survival therefore depends on temperature-adjusted performance,</span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>  $\tilde u_{ij} = u_{ij} - t_{sj}\, w_{ij}$: the lizard's expected</span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>  performance at its species' mean test temperature.</span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\delta_{sj}$ is the male--female difference in performance not</span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>  explained by morphology.</span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$b^{\text{svl}}_{sj}$ and $b^{\text{shape}}_{sj}$ are the size and</span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>  shape effects on performance (the first link of the paradigm).</span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\boldsymbol{\Omega}$ is a residual correlation matrix shared across</span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>  species. It captures lizards that perform well on all tasks for</span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>  reasons beyond the measured morphology, such as condition or</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>  motivation.</span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Missing $u_{ij}$ are parameters drawn from the same distribution, so</span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>  lizards with missing performance still contribute their survival</span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>  information. This assumes values are missing at random given</span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>  morphology, sex and the other performance traits.</span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Leaf-clinging zeros are left-censored. For those lizards,</span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>  $u_{i,\text{leaf}}$ is also a parameter, but it is constrained to lie</span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>  below the detection limit,</span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>  $$</span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a>  u_{i,\text{leaf}} &lt; c_s = \operatorname{std}_s(\log 0.01),</span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a>  $$</span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>  and follows the same multivariate normal distribution. They therefore</span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a>  count as the weakest leaf clingers, rather than being dropped or given</span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>  an arbitrary value. The standardisation constants for leaf clinging</span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>  are computed from the non-zero values.</span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="fu">## Survival and detection submodel</span></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a>The probability of surviving the first six months depends on</span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>temperature-adjusted performance:</span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>z_i \sim \operatorname{Bernoulli}(\phi_i),</span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>\operatorname{logit}(\phi_i) = a_s + c_s\, m_i + \sum_j \beta_{sj}\, \tilde u_{ij} + \sum_j q_{sj}\, \tilde u_{ij}^2 \;\left<span class="co">[</span><span class="ot">\, + \sum_k \gamma_{sk}\, x_{ik} \,\right</span><span class="co">]</span>_{\text{M2 only}}.</span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$a_s$ is the logit 6-month survival of an average female.</span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$c_s$ is the sex difference in survival.</span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\beta_{sj}$ is linear selection on performance $j$, and $q_{sj}$ is</span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a>  quadratic selection. $q &lt; 0$ is stabilising and $q &gt; 0$ disruptive.</span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>  The conventional quadratic gradient is $2q_{sj}$.</span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\gamma_{sk}$ is the direct effect of morphology on survival. It is</span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>  fixed at 0 in M1. Including $x_{i,\text{svl}}$ here guards against</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a>  attributing size-related survival to performance.</span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Correlational selection ($\tilde u_{ij} \tilde u_{ij'}$ terms) is not included.</span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a>Resighting depends on whether the lizard is alive:</span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>y_{i2} \sim \operatorname{Bernoulli}(z_i\, p_i), \qquad \operatorname{logit}(p_i) = \pi_s + \zeta_p\, m_i,</span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a>y_{i3} \sim \operatorname{Bernoulli}(z_i\, \lambda_i), \qquad \operatorname{logit}(\lambda_i) = \ell_s + \zeta_\lambda\, m_i.</span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$p_i$ is the probability of detection in fall given the lizard is</span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a>  alive.</span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$\lambda_i$ is the probability of being seen in spring 2025 given the</span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a>  lizard was alive in fall. It combines fall-to-spring survival and</span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a>  spring detection, which three occasions cannot separate. It is a</span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a>  nuisance parameter.</span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The sex effects on detection, $\zeta_p$ and $\zeta_\lambda$, are shared</span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a>  across species. Males display and may be more conspicuous.</span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>This is a Cormack--Jolly--Seber model for three occasions. Summing over</span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>the latent $z_i$ gives the likelihood of each history:</span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> History $(y_{i2}, y_{i3})$ <span class="pp">|</span> Probability <span class="pp">|</span></span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|</span></span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 1 1 <span class="pp">|</span> $\phi_i\, p_i\, \lambda_i$ <span class="pp">|</span></span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 0 1 <span class="pp">|</span> $\phi_i\, (1 - p_i)\, \lambda_i$ <span class="pp">|</span></span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 1 0 <span class="pp">|</span> $\phi_i\, p_i\, (1 - \lambda_i)$ <span class="pp">|</span></span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> 0 0 <span class="pp">|</span> $(1 - \phi_i) + \phi_i\, (1 - p_i)(1 - \lambda_i)$ <span class="pp">|</span></span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a>Lizards seen in spring 2025 but missed in fall (history 01) identify</span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a>$p$. Selection on 6-month survival ($\phi$) is then estimated free of</span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a>detection bias. This assumes detection does not depend on performance</span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a>or morphology beyond sex.</span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a><span class="fu">## Derived quantities</span></span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a>For morphological predictor $k$ in species $s$, evaluated at the</span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a>species mean, where $\tilde u = 0$ so the quadratic terms vanish:</span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a>\text{indirect}_{sk} = \sum_{j} b_{sjk}\, \beta_{sj},</span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a>\text{direct}_{sk} = \gamma_{sk},</span>
+<span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a>\qquad</span>
+<span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a>\text{total}_{sk} = \text{indirect}_{sk} + \text{direct}_{sk}.</span>
+<span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a>Here $b_{sjk}$ is $b^{\text{svl}}_{sj}$ for $k = \text{svl}$,</span>
+<span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a>$b^{\text{shape}}_{sj}$ when $k = k(j)$, and 0 otherwise. Size is the</span>
+<span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a>only predictor with indirect paths through all four performance traits.</span>
+<span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a>Support for full mediation is assessed in three ways: from the</span>
+<span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a>posteriors of $\gamma_{sk}$, by comparing M1 and M2 with PSIS-LOO, and</span>
+<span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a>by checking in simulation (<span class="co">[</span><span class="ot">Validation</span><span class="co">](03-validation.qmd)</span>) whether the design can detect</span>
+<span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a>$\gamma \neq 0$.</span>
+<span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a><span class="fu">## Priors</span></span>
+<span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a><span class="fu">### Hierarchical structure</span></span>
+<span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a>Every parameter labelled hierarchical below varies by species and is</span>
+<span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a>partially pooled:</span>
+<span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a>\theta_s = \mu_\theta + \tau_\theta\, \tilde\theta_s, \qquad \tilde\theta_s \sim \mathcal{N}(0, 1),</span>
+<span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a>with separate $\mu_\theta$ and $\tau_\theta$ for each performance trait</span>
+<span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a>$j$ or predictor $k$. This is the non-centered form used in Stan. With</span>
+<span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a>only three species, $\tau_\theta$ is weakly identified, so its priors</span>
+<span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a>are deliberately informative.</span>
+<span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a><span class="fu">### Prior distributions</span></span>
+<span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a>All scales are standardised traits or logits. $\mathcal{N}^+$ is the</span>
+<span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a>half-normal distribution.</span>
+<span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Parameter <span class="pp">|</span> Pooling <span class="pp">|</span> Prior <span class="pp">|</span></span>
+<span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a><span class="pp">|---|---|---|</span></span>
+<span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Performance** <span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\alpha_{sj}$ <span class="pp">|</span> none <span class="pp">|</span> $\mathcal{N}(0, 0.5)$ <span class="pp">|</span></span>
+<span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\delta_{sj}$ <span class="pp">|</span> hierarchical <span class="pp">|</span> $\mu \sim \mathcal{N}(0, 1)$, $\tau \sim \mathcal{N}^+(0, 0.5)$ <span class="pp">|</span></span>
+<span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $b^{\text{svl}}_{sj}$ <span class="pp">|</span> hierarchical <span class="pp">|</span> $\mu \sim \mathcal{N}(0, 0.5)$, $\tau \sim \mathcal{N}^+(0, 0.25)$ <span class="pp">|</span></span>
+<span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $b^{\text{shape}}_{sj}$ <span class="pp">|</span> hierarchical <span class="pp">|</span> $\mu \sim \mathcal{N}(0, 0.5)$, $\tau \sim \mathcal{N}^+(0, 0.25)$ <span class="pp">|</span></span>
+<span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $t_{sj}$ (sprint, bite) <span class="pp">|</span> hierarchical <span class="pp">|</span> $\mu \sim \mathcal{N}(0, 0.5)$, $\tau \sim \mathcal{N}^+(0, 0.25)$ <span class="pp">|</span></span>
+<span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\sigma_{sj}$ <span class="pp">|</span> none <span class="pp">|</span> $\mathcal{N}^+(0, 1)$ <span class="pp">|</span></span>
+<span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\boldsymbol{\Omega}$ <span class="pp">|</span> shared <span class="pp">|</span> $\operatorname{LKJ}(2)$ <span class="pp">|</span></span>
+<span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Survival** <span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $a_s$ <span class="pp">|</span> hierarchical <span class="pp">|</span> $\mu \sim \mathcal{N}(-1, 1)$, $\tau \sim \mathcal{N}^+(0, 0.5)$ <span class="pp">|</span></span>
+<span id="cb2-214"><a href="#cb2-214" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $c_s$ <span class="pp">|</span> hierarchical <span class="pp">|</span> $\mu \sim \mathcal{N}(0, 1)$, $\tau \sim \mathcal{N}^+(0, 0.5)$ <span class="pp">|</span></span>
+<span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\beta_{sj}$ <span class="pp">|</span> hierarchical <span class="pp">|</span> $\mu \sim \mathcal{N}(0, 0.5)$, $\tau \sim \mathcal{N}^+(0, 0.25)$ <span class="pp">|</span></span>
+<span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $q_{sj}$ <span class="pp">|</span> hierarchical <span class="pp">|</span> $\mu \sim \mathcal{N}(0, 0.25)$, $\tau \sim \mathcal{N}^+(0, 0.1)$ <span class="pp">|</span></span>
+<span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\gamma_{sk}$ (M2) <span class="pp">|</span> hierarchical <span class="pp">|</span> $\mu \sim \mathcal{N}(0, 0.5)$, $\tau \sim \mathcal{N}^+(0, 0.25)$ <span class="pp">|</span></span>
+<span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Detection** <span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
+<span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\pi_s$ <span class="pp">|</span> hierarchical <span class="pp">|</span> $\mu \sim \mathcal{N}(0, 1.5)$, $\tau \sim \mathcal{N}^+(0, 1)$ <span class="pp">|</span></span>
+<span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\ell_s$ <span class="pp">|</span> hierarchical <span class="pp">|</span> $\mu \sim \mathcal{N}(0, 1.5)$, $\tau \sim \mathcal{N}^+(0, 1)$ <span class="pp">|</span></span>
+<span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\zeta_p$, $\zeta_\lambda$ <span class="pp">|</span> shared <span class="pp">|</span> $\mathcal{N}(0, 1)$ <span class="pp">|</span></span>
+<span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a>The reasoning behind these priors:</span>
+<span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Performance intercepts $\alpha_{sj}$** are near 0 by construction,</span>
+<span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a>  because traits are centred within species. They are offset only by</span>
+<span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a>  the sex term, so pooling them adds nothing. A first version used</span>
+<span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a>  $\mathcal{N}(0, 1)$, but prior predictive simulation showed it allowed</span>
+<span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a>  implausible shifts in performance, for example leaf censoring rates</span>
+<span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a>  above 30% when about 3% is observed. It was tightened to</span>
+<span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a>  $\mathcal{N}(0, 0.5)$.</span>
+<span id="cb2-232"><a href="#cb2-232" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Performance slopes** of $\mathcal{N}(0, 0.5)$ put 95% of the mass</span>
+<span id="cb2-233"><a href="#cb2-233" aria-hidden="true" tabindex="-1"></a>  below about 1 SD of performance per SD of morphology.</span>
+<span id="cb2-234"><a href="#cb2-234" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Residual SDs** $\sigma_{sj}$ must lie below 1, because performance</span>
+<span id="cb2-235"><a href="#cb2-235" aria-hidden="true" tabindex="-1"></a>  is standardised.</span>
+<span id="cb2-236"><a href="#cb2-236" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Baseline survival** $\mu_a \sim \mathcal{N}(-1, 1)$ centres 6-month</span>
+<span id="cb2-237"><a href="#cb2-237" aria-hidden="true" tabindex="-1"></a>  survival near 27%. That is a little above the naive 20%, as expected</span>
+<span id="cb2-238"><a href="#cb2-238" aria-hidden="true" tabindex="-1"></a>  once detection is accounted for.</span>
+<span id="cb2-239"><a href="#cb2-239" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Selection gradients** of $\mathcal{N}(0, 0.5)$ allow odds of</span>
+<span id="cb2-240"><a href="#cb2-240" aria-hidden="true" tabindex="-1"></a>  survival to change up to about 2.7-fold per SD of performance (2 prior</span>
+<span id="cb2-241"><a href="#cb2-241" aria-hidden="true" tabindex="-1"></a>  SDs). The quadratic terms are tighter.</span>
+<span id="cb2-242"><a href="#cb2-242" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Detection intercepts** of $\mathcal{N}(0, 1.5)$ are close to uniform</span>
+<span id="cb2-243"><a href="#cb2-243" aria-hidden="true" tabindex="-1"></a>  on the probability scale.</span>
+<span id="cb2-244"><a href="#cb2-244" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-245"><a href="#cb2-245" aria-hidden="true" tabindex="-1"></a>Prior predictive checks of these priors are on the</span>
+<span id="cb2-246"><a href="#cb2-246" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Validation page</span><span class="co">](03-validation.qmd)</span>.</span>
+<span id="cb2-247"><a href="#cb2-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-248"><a href="#cb2-248" aria-hidden="true" tabindex="-1"></a><span class="fu">## Assumptions and limitations</span></span>
+<span id="cb2-249"><a href="#cb2-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-250"><a href="#cb2-250" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Performance and morphology are measured without error.** Sprint</span>
+<span id="cb2-251"><a href="#cb2-251" aria-hidden="true" tabindex="-1"></a>  timing resolution violates this mildly.</span>
+<span id="cb2-252"><a href="#cb2-252" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Missing data.** Performance is missing at random given the model.</span>
+<span id="cb2-253"><a href="#cb2-253" aria-hidden="true" tabindex="-1"></a>  The <span class="in">`r n_missing_morph`</span> lizards with missing toepad area or hind toe</span>
+<span id="cb2-254"><a href="#cb2-254" aria-hidden="true" tabindex="-1"></a>  length are excluded. Only one of them survived to 6 months.</span>
+<span id="cb2-255"><a href="#cb2-255" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Detection** depends on species and sex only. Movement off the study</span>
+<span id="cb2-256"><a href="#cb2-256" aria-hidden="true" tabindex="-1"></a>  area is indistinguishable from death, so $\phi$ is *apparent*</span>
+<span id="cb2-257"><a href="#cb2-257" aria-hidden="true" tabindex="-1"></a>  survival.</span>
+<span id="cb2-258"><a href="#cb2-258" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Shared residual correlation.** The correlation among performance</span>
+<span id="cb2-259"><a href="#cb2-259" aria-hidden="true" tabindex="-1"></a>  traits, $\boldsymbol{\Omega}$, is the same for all species.</span>
+<span id="cb2-260"><a href="#cb2-260" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Temperature.** Its effect on performance is linear, and it is</span>
+<span id="cb2-261"><a href="#cb2-261" aria-hidden="true" tabindex="-1"></a>  unmeasured for both clinging trials.</span>
+<span id="cb2-262"><a href="#cb2-262" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Claw size.** Relative hind toe length is a stand-in for claw size.</span>
+<span id="cb2-263"><a href="#cb2-263" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**No correlational selection.** It could be added as an extension.</span>
+<span id="cb2-264"><a href="#cb2-264" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Three species.** Among-species variances are estimated mostly from</span>
+<span id="cb2-265"><a href="#cb2-265" aria-hidden="true" tabindex="-1"></a>  their priors.</span>
+<span id="cb2-266"><a href="#cb2-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-267"><a href="#cb2-267" aria-hidden="true" tabindex="-1"></a><span class="fu">## Stan code</span></span>
+<span id="cb2-268"><a href="#cb2-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-269"><a href="#cb2-269" aria-hidden="true" tabindex="-1"></a>::: {.callout-note}</span>
+<span id="cb2-270"><a href="#cb2-270" aria-hidden="true" tabindex="-1"></a><span class="fu">## In progress</span></span>
+<span id="cb2-271"><a href="#cb2-271" aria-hidden="true" tabindex="-1"></a>The Stan implementation will be added here. It will read the same</span>
+<span id="cb2-272"><a href="#cb2-272" aria-hidden="true" tabindex="-1"></a>priors as the simulator (<span class="in">`R/priors.R`</span>) and use one flag to switch</span>
+<span id="cb2-273"><a href="#cb2-273" aria-hidden="true" tabindex="-1"></a>between M1 and M2.</span>
+<span id="cb2-274"><a href="#cb2-274" aria-hidden="true" tabindex="-1"></a>:::</span>
+</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Garcia Costoya · Lizard Island anoles</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/ggcostoya/morph-perf-surv-lizard-island/blob/main/02-model.qmd" class="toc-action"><i class="bi bi-github"></i>View source</a></li><li><a href="https://github.com/ggcostoya/morph-perf-surv-lizard-island/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Built with <a href="https://quarto.org">Quarto</a></p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

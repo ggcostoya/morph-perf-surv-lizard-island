@@ -1,0 +1,322 @@
+[
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "This project is part of Guillermo Garcia Costoya’s research on natural selection in Anolis lizards, advised by James Stroud. Fieldwork took place on Lizard Island.\nThe source code for this site, the cleaned data and the analysis scripts are in the GitHub repository.",
+    "crumbs": [
+      "About"
+    ]
+  },
+  {
+    "objectID": "04-fit.html",
+    "href": "04-fit.html",
+    "title": "4. Fit",
+    "section": "",
+    "text": "NoteIn progress\n\n\n\nThis page will be filled in after the model passes validation.",
+    "crumbs": [
+      "4. Fit"
+    ]
+  },
+  {
+    "objectID": "04-fit.html#planned-contents",
+    "href": "04-fit.html#planned-contents",
+    "title": "4. Fit",
+    "section": "Planned contents",
+    "text": "Planned contents\n\nFitting M1 and M2 to the analysis dataset (computed in scripts/, results saved to results/).\nSampler diagnostics: divergences, \\(\\hat R\\), effective sample sizes and energy.\nParameter summaries for performance, survival and detection.\nPosterior predictive checks: resighting histories by species and sex, performance distributions, and leaf censoring rates.\nModel comparison of M1 and M2 by leave-one-out cross-validation (PSIS-LOO).",
+    "crumbs": [
+      "4. Fit"
+    ]
+  },
+  {
+    "objectID": "02-model.html",
+    "href": "02-model.html",
+    "title": "2. Model",
+    "section": "",
+    "text": "Show code\nlibrary(tidyverse)\nlizards &lt;- read_csv(\"data/lizards-spring-2024.csv\", show_col_types = FALSE)\nn_missing_morph &lt;- sum(lizards$exclusion == \"missing morphology\", na.rm = TRUE)\nThe model estimates both links of the paradigm jointly, morphology → performance and performance → survival, while correcting survival for imperfect detection. The choices behind the data inputs are explained on the Data page. A PDF version of this page is also available.",
+    "crumbs": [
+      "2. Model"
+    ]
+  },
+  {
+    "objectID": "02-model.html#causal-diagram",
+    "href": "02-model.html#causal-diagram",
+    "title": "2. Model",
+    "section": "Causal diagram",
+    "text": "Causal diagram\n\n\n\nCausal structure of the model. Solid arrows are present in both models. The dashed arrow (direct effects \\(\\gamma\\)) is present only in M2. Sex affects performance (\\(\\delta\\)), survival (\\(c\\)) and detection (\\(\\zeta\\)). Body temperature at the trial affects sprint and bite (\\(t\\)).",
+    "crumbs": [
+      "2. Model"
+    ]
+  },
+  {
+    "objectID": "02-model.html#transformations",
+    "href": "02-model.html#transformations",
+    "title": "2. Model",
+    "section": "Transformations",
+    "text": "Transformations\nAll continuous variables except body temperature are log-transformed. All, including temperature, are then standardised within species, using that species’ observed sample mean and SD: \\[\n\\operatorname{std}_s(v) = \\frac{v - \\bar{v}_s}{\\operatorname{sd}_s(v)}.\n\\] Coefficients are then in within-species SD units, and so comparable among species and traits. Survival coefficients become standardised selection gradients (on the logit scale), and one set of generic priors can be used. The constants \\(\\bar v_s\\) and \\(\\operatorname{sd}_s(v)\\) are fixed data, so the simulator used for calibration applies the identical transformation (prepare_data() in R/prepare-data.R).",
+    "crumbs": [
+      "2. Model"
+    ]
+  },
+  {
+    "objectID": "02-model.html#notation",
+    "href": "02-model.html#notation",
+    "title": "2. Model",
+    "section": "Notation",
+    "text": "Notation\n\n\n\n\n\n\n\nSymbol\nMeaning\n\n\n\n\n\\(i = 1, \\dots, N\\)\nindividual\n\n\n\\(s = s[i] \\in \\{\\text{caro}, \\text{cris}, \\text{sag}\\}\\)\nspecies of individual \\(i\\)\n\n\n\\(j \\in \\{\\text{spr}, \\text{bite}, \\text{bark}, \\text{leaf}\\}\\)\nperformance trait\n\n\n\\(k \\in \\{\\text{svl}, \\text{hl}, \\text{hw}, \\text{toe}, \\text{pad}\\}\\)\nmorphological predictor\n\n\n\\(k(j)\\)\nshape trait linked to \\(j\\): \\(k(\\text{spr}) = \\text{hl}\\), \\(k(\\text{bite}) = \\text{hw}\\), \\(k(\\text{bark}) = \\text{toe}\\), \\(k(\\text{leaf}) = \\text{pad}\\)\n\n\n\\(m_i \\in \\{0, 1\\}\\)\nmale indicator (female = 0)\n\n\n\\(x_{ik}\\)\nstandardised morphological predictor (data)\n\n\n\\(w_{ij}\\)\nstandardised body temperature at the trial for \\(j\\) (data; 0 for bark and leaf)\n\n\n\\(u_{ij}\\)\nstandardised log performance (data, or latent if missing)\n\n\n\\(z_i \\in \\{0, 1\\}\\)\nalive at the fall 2024 census (latent)\n\n\n\\(y_{i2}, y_{i3} \\in \\{0, 1\\}\\)\nseen in fall 2024 / spring 2025",
+    "crumbs": [
+      "2. Model"
+    ]
+  },
+  {
+    "objectID": "02-model.html#performance-submodel",
+    "href": "02-model.html#performance-submodel",
+    "title": "2. Model",
+    "section": "Performance submodel",
+    "text": "Performance submodel\nEach lizard’s vector of the four performance traits is multivariate normal: \\[\n\\mathbf{u}_i \\sim \\operatorname{MVN}\\left(\\boldsymbol{\\mu}_i, \\boldsymbol{\\Sigma}_{s[i]}\\right),\n\\qquad\n\\boldsymbol{\\Sigma}_s = \\operatorname{diag}(\\boldsymbol{\\sigma}_s)\\, \\boldsymbol{\\Omega}\\, \\operatorname{diag}(\\boldsymbol{\\sigma}_s),\n\\] with a mean that depends on size, the linked shape trait, sex and body temperature: \\[\n\\mu_{ij} = \\alpha_{sj} + \\delta_{sj}\\, m_i + b^{\\text{svl}}_{sj}\\, x_{i,\\text{svl}} + b^{\\text{shape}}_{sj}\\, x_{i,k(j)} + t_{sj}\\, w_{ij}.\n\\]\n\n\\(\\alpha_{sj}\\) is the expected performance of a female of average size and shape, tested at the species’ mean temperature.\n\\(t_{sj}\\) is the effect of body temperature during the trial. It is estimated for sprint and bite only, and fixed at 0 for both clinging traits. Temperature is a condition of the trial, not a trait of the lizard. Survival therefore depends on temperature-adjusted performance, \\(\\tilde u_{ij} = u_{ij} - t_{sj}\\, w_{ij}\\): the lizard’s expected performance at its species’ mean test temperature.\n\\(\\delta_{sj}\\) is the male–female difference in performance not explained by morphology.\n\\(b^{\\text{svl}}_{sj}\\) and \\(b^{\\text{shape}}_{sj}\\) are the size and shape effects on performance (the first link of the paradigm).\n\\(\\boldsymbol{\\Omega}\\) is a residual correlation matrix shared across species. It captures lizards that perform well on all tasks for reasons beyond the measured morphology, such as condition or motivation.\nMissing \\(u_{ij}\\) are parameters drawn from the same distribution, so lizards with missing performance still contribute their survival information. This assumes values are missing at random given morphology, sex and the other performance traits.\nLeaf-clinging zeros are left-censored. For those lizards, \\(u_{i,\\text{leaf}}\\) is also a parameter, but it is constrained to lie below the detection limit, \\[\nu_{i,\\text{leaf}} &lt; c_s = \\operatorname{std}_s(\\log 0.01),\n\\] and follows the same multivariate normal distribution. They therefore count as the weakest leaf clingers, rather than being dropped or given an arbitrary value. The standardisation constants for leaf clinging are computed from the non-zero values.",
+    "crumbs": [
+      "2. Model"
+    ]
+  },
+  {
+    "objectID": "02-model.html#survival-and-detection-submodel",
+    "href": "02-model.html#survival-and-detection-submodel",
+    "title": "2. Model",
+    "section": "Survival and detection submodel",
+    "text": "Survival and detection submodel\nThe probability of surviving the first six months depends on temperature-adjusted performance: \\[\nz_i \\sim \\operatorname{Bernoulli}(\\phi_i),\n\\] \\[\n\\operatorname{logit}(\\phi_i) = a_s + c_s\\, m_i + \\sum_j \\beta_{sj}\\, \\tilde u_{ij} + \\sum_j q_{sj}\\, \\tilde u_{ij}^2 \\;\\left[\\, + \\sum_k \\gamma_{sk}\\, x_{ik} \\,\\right]_{\\text{M2 only}}.\n\\]\n\n\\(a_s\\) is the logit 6-month survival of an average female.\n\\(c_s\\) is the sex difference in survival.\n\\(\\beta_{sj}\\) is linear selection on performance \\(j\\), and \\(q_{sj}\\) is quadratic selection. \\(q &lt; 0\\) is stabilising and \\(q &gt; 0\\) disruptive. The conventional quadratic gradient is \\(2q_{sj}\\).\n\\(\\gamma_{sk}\\) is the direct effect of morphology on survival. It is fixed at 0 in M1. Including \\(x_{i,\\text{svl}}\\) here guards against attributing size-related survival to performance.\nCorrelational selection (\\(\\tilde u_{ij} \\tilde u_{ij'}\\) terms) is not included.\n\nResighting depends on whether the lizard is alive: \\[\ny_{i2} \\sim \\operatorname{Bernoulli}(z_i\\, p_i), \\qquad \\operatorname{logit}(p_i) = \\pi_s + \\zeta_p\\, m_i,\n\\] \\[\ny_{i3} \\sim \\operatorname{Bernoulli}(z_i\\, \\lambda_i), \\qquad \\operatorname{logit}(\\lambda_i) = \\ell_s + \\zeta_\\lambda\\, m_i.\n\\]\n\n\\(p_i\\) is the probability of detection in fall given the lizard is alive.\n\\(\\lambda_i\\) is the probability of being seen in spring 2025 given the lizard was alive in fall. It combines fall-to-spring survival and spring detection, which three occasions cannot separate. It is a nuisance parameter.\nThe sex effects on detection, \\(\\zeta_p\\) and \\(\\zeta_\\lambda\\), are shared across species. Males display and may be more conspicuous.\n\nThis is a Cormack–Jolly–Seber model for three occasions. Summing over the latent \\(z_i\\) gives the likelihood of each history:\n\n\n\nHistory \\((y_{i2}, y_{i3})\\)\nProbability\n\n\n\n\n1 1\n\\(\\phi_i\\, p_i\\, \\lambda_i\\)\n\n\n0 1\n\\(\\phi_i\\, (1 - p_i)\\, \\lambda_i\\)\n\n\n1 0\n\\(\\phi_i\\, p_i\\, (1 - \\lambda_i)\\)\n\n\n0 0\n\\((1 - \\phi_i) + \\phi_i\\, (1 - p_i)(1 - \\lambda_i)\\)\n\n\n\nLizards seen in spring 2025 but missed in fall (history 01) identify \\(p\\). Selection on 6-month survival (\\(\\phi\\)) is then estimated free of detection bias. This assumes detection does not depend on performance or morphology beyond sex.",
+    "crumbs": [
+      "2. Model"
+    ]
+  },
+  {
+    "objectID": "02-model.html#derived-quantities",
+    "href": "02-model.html#derived-quantities",
+    "title": "2. Model",
+    "section": "Derived quantities",
+    "text": "Derived quantities\nFor morphological predictor \\(k\\) in species \\(s\\), evaluated at the species mean, where \\(\\tilde u = 0\\) so the quadratic terms vanish: \\[\n\\text{indirect}_{sk} = \\sum_{j} b_{sjk}\\, \\beta_{sj},\n\\qquad\n\\text{direct}_{sk} = \\gamma_{sk},\n\\qquad\n\\text{total}_{sk} = \\text{indirect}_{sk} + \\text{direct}_{sk}.\n\\] Here \\(b_{sjk}\\) is \\(b^{\\text{svl}}_{sj}\\) for \\(k = \\text{svl}\\), \\(b^{\\text{shape}}_{sj}\\) when \\(k = k(j)\\), and 0 otherwise. Size is the only predictor with indirect paths through all four performance traits. Support for full mediation is assessed in three ways: from the posteriors of \\(\\gamma_{sk}\\), by comparing M1 and M2 with PSIS-LOO, and by checking in simulation (Validation) whether the design can detect \\(\\gamma \\neq 0\\).",
+    "crumbs": [
+      "2. Model"
+    ]
+  },
+  {
+    "objectID": "02-model.html#priors",
+    "href": "02-model.html#priors",
+    "title": "2. Model",
+    "section": "Priors",
+    "text": "Priors\n\nHierarchical structure\nEvery parameter labelled hierarchical below varies by species and is partially pooled: \\[\n\\theta_s = \\mu_\\theta + \\tau_\\theta\\, \\tilde\\theta_s, \\qquad \\tilde\\theta_s \\sim \\mathcal{N}(0, 1),\n\\] with separate \\(\\mu_\\theta\\) and \\(\\tau_\\theta\\) for each performance trait \\(j\\) or predictor \\(k\\). This is the non-centered form used in Stan. With only three species, \\(\\tau_\\theta\\) is weakly identified, so its priors are deliberately informative.\n\n\nPrior distributions\nAll scales are standardised traits or logits. \\(\\mathcal{N}^+\\) is the half-normal distribution.\n\n\n\n\n\n\n\n\nParameter\nPooling\nPrior\n\n\n\n\nPerformance\n\n\n\n\n\\(\\alpha_{sj}\\)\nnone\n\\(\\mathcal{N}(0, 0.5)\\)\n\n\n\\(\\delta_{sj}\\)\nhierarchical\n\\(\\mu \\sim \\mathcal{N}(0, 1)\\), \\(\\tau \\sim \\mathcal{N}^+(0, 0.5)\\)\n\n\n\\(b^{\\text{svl}}_{sj}\\)\nhierarchical\n\\(\\mu \\sim \\mathcal{N}(0, 0.5)\\), \\(\\tau \\sim \\mathcal{N}^+(0, 0.25)\\)\n\n\n\\(b^{\\text{shape}}_{sj}\\)\nhierarchical\n\\(\\mu \\sim \\mathcal{N}(0, 0.5)\\), \\(\\tau \\sim \\mathcal{N}^+(0, 0.25)\\)\n\n\n\\(t_{sj}\\) (sprint, bite)\nhierarchical\n\\(\\mu \\sim \\mathcal{N}(0, 0.5)\\), \\(\\tau \\sim \\mathcal{N}^+(0, 0.25)\\)\n\n\n\\(\\sigma_{sj}\\)\nnone\n\\(\\mathcal{N}^+(0, 1)\\)\n\n\n\\(\\boldsymbol{\\Omega}\\)\nshared\n\\(\\operatorname{LKJ}(2)\\)\n\n\nSurvival\n\n\n\n\n\\(a_s\\)\nhierarchical\n\\(\\mu \\sim \\mathcal{N}(-1, 1)\\), \\(\\tau \\sim \\mathcal{N}^+(0, 0.5)\\)\n\n\n\\(c_s\\)\nhierarchical\n\\(\\mu \\sim \\mathcal{N}(0, 1)\\), \\(\\tau \\sim \\mathcal{N}^+(0, 0.5)\\)\n\n\n\\(\\beta_{sj}\\)\nhierarchical\n\\(\\mu \\sim \\mathcal{N}(0, 0.5)\\), \\(\\tau \\sim \\mathcal{N}^+(0, 0.25)\\)\n\n\n\\(q_{sj}\\)\nhierarchical\n\\(\\mu \\sim \\mathcal{N}(0, 0.25)\\), \\(\\tau \\sim \\mathcal{N}^+(0, 0.1)\\)\n\n\n\\(\\gamma_{sk}\\) (M2)\nhierarchical\n\\(\\mu \\sim \\mathcal{N}(0, 0.5)\\), \\(\\tau \\sim \\mathcal{N}^+(0, 0.25)\\)\n\n\nDetection\n\n\n\n\n\\(\\pi_s\\)\nhierarchical\n\\(\\mu \\sim \\mathcal{N}(0, 1.5)\\), \\(\\tau \\sim \\mathcal{N}^+(0, 1)\\)\n\n\n\\(\\ell_s\\)\nhierarchical\n\\(\\mu \\sim \\mathcal{N}(0, 1.5)\\), \\(\\tau \\sim \\mathcal{N}^+(0, 1)\\)\n\n\n\\(\\zeta_p\\), \\(\\zeta_\\lambda\\)\nshared\n\\(\\mathcal{N}(0, 1)\\)\n\n\n\nThe reasoning behind these priors:\n\nPerformance intercepts \\(\\alpha_{sj}\\) are near 0 by construction, because traits are centred within species. They are offset only by the sex term, so pooling them adds nothing. A first version used \\(\\mathcal{N}(0, 1)\\), but prior predictive simulation showed it allowed implausible shifts in performance, for example leaf censoring rates above 30% when about 3% is observed. It was tightened to \\(\\mathcal{N}(0, 0.5)\\).\nPerformance slopes of \\(\\mathcal{N}(0, 0.5)\\) put 95% of the mass below about 1 SD of performance per SD of morphology.\nResidual SDs \\(\\sigma_{sj}\\) must lie below 1, because performance is standardised.\nBaseline survival \\(\\mu_a \\sim \\mathcal{N}(-1, 1)\\) centres 6-month survival near 27%. That is a little above the naive 20%, as expected once detection is accounted for.\nSelection gradients of \\(\\mathcal{N}(0, 0.5)\\) allow odds of survival to change up to about 2.7-fold per SD of performance (2 prior SDs). The quadratic terms are tighter.\nDetection intercepts of \\(\\mathcal{N}(0, 1.5)\\) are close to uniform on the probability scale.\n\nPrior predictive checks of these priors are on the Validation page.",
+    "crumbs": [
+      "2. Model"
+    ]
+  },
+  {
+    "objectID": "02-model.html#assumptions-and-limitations",
+    "href": "02-model.html#assumptions-and-limitations",
+    "title": "2. Model",
+    "section": "Assumptions and limitations",
+    "text": "Assumptions and limitations\n\nPerformance and morphology are measured without error. Sprint timing resolution violates this mildly.\nMissing data. Performance is missing at random given the model. The 17 lizards with missing toepad area or hind toe length are excluded. Only one of them survived to 6 months.\nDetection depends on species and sex only. Movement off the study area is indistinguishable from death, so \\(\\phi\\) is apparent survival.\nShared residual correlation. The correlation among performance traits, \\(\\boldsymbol{\\Omega}\\), is the same for all species.\nTemperature. Its effect on performance is linear, and it is unmeasured for both clinging trials.\nClaw size. Relative hind toe length is a stand-in for claw size.\nNo correlational selection. It could be added as an extension.\nThree species. Among-species variances are estimated mostly from their priors.",
+    "crumbs": [
+      "2. Model"
+    ]
+  },
+  {
+    "objectID": "02-model.html#stan-code",
+    "href": "02-model.html#stan-code",
+    "title": "2. Model",
+    "section": "Stan code",
+    "text": "Stan code\n\n\n\n\n\n\nNoteIn progress\n\n\n\nThe Stan implementation will be added here. It will read the same priors as the simulator (R/priors.R) and use one flag to switch between M1 and M2.",
+    "crumbs": [
+      "2. Model"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Start here",
+    "section": "",
+    "text": "This site is the complete, open record of a study of natural selection in three Anolis lizards on Lizard Island. Every step is here, from the cleaned field data to the final biological conclusions: data cleaning decisions, model equations, Stan code, validation and model checks. The pages are meant to be read in order, but each one stands on its own.",
+    "crumbs": [
+      "Start here"
+    ]
+  },
+  {
+    "objectID": "index.html#the-question",
+    "href": "index.html#the-question",
+    "title": "Start here",
+    "section": "The question",
+    "text": "The question\nMany evolutionary studies link morphology directly to survival or reproductive success. The ecomorphological paradigm proposes a middle step instead: morphology determines what an animal can do, its whole-organism performance, and performance determines whether it survives.\n\n\n\n\n\nflowchart LR\n  M[Morphology] --&gt; P[Performance] --&gt; S[Survival] --&gt; R[Resighting]\n  M -.-&gt; S\n\n\n The paradigm being tested. Solid arrows are the mediated path; the dashed arrow is a direct effect of morphology on survival that bypasses measured performance. \n\n\n\nWe test two hypotheses:\n\nM1, full mediation. Morphology affects 6-month survival only through sprint speed, bite force and clinging ability on bark and on leaves.\nM2, partial mediation. Morphology also affects survival directly, through routes that measured performance does not capture.",
+    "crumbs": [
+      "Start here"
+    ]
+  },
+  {
+    "objectID": "index.html#study-system",
+    "href": "index.html#study-system",
+    "title": "Start here",
+    "section": "Study system",
+    "text": "Study system\nLizards were captured, measured, tested for performance and individually marked in spring 2024, then resighted in fall 2024 (6 months) and spring 2025 (12 months). We analyse three species that share the island:\n\n\n\nSpecies\nAbbreviation\n\n\n\n\nAnolis carolinensis\ncaro\n\n\nAnolis cristatellus\ncris\n\n\nAnolis sagrei\nsag\n\n\n\nSurvival is never observed directly, only resightings. Lizards that are alive can be missed, and how often differs among species. The model therefore estimates detection probability alongside survival.",
+    "crumbs": [
+      "Start here"
+    ]
+  },
+  {
+    "objectID": "index.html#how-this-site-is-organised",
+    "href": "index.html#how-this-site-is-organised",
+    "title": "Start here",
+    "section": "How this site is organised",
+    "text": "How this site is organised\n\n\n\nPage\nWhat it contains\nStatus\n\n\n\n\n1. Data\nData sources, every cleaning decision and its justification, and exploratory plots\nComplete\n\n\n2. Model\nCausal diagram, full mathematical specification, priors and Stan code\nSpecification complete; Stan code in progress\n\n\n3. Validation\nPrior predictive checks and simulation-based calibration\nIn progress\n\n\n4. Fit\nFitting the models to the data, diagnostics and posterior predictive checks\nIn progress\n\n\n5. Synthesis\nDirect vs. indirect effects of morphology, selection on performance, and biological interpretation\nIn progress\n\n\n\nCode is shown on every page but folded by default; click Show code to expand any chunk, or use the Code menu at the top of a page to show all of it.",
+    "crumbs": [
+      "Start here"
+    ]
+  },
+  {
+    "objectID": "index.html#reproducing-the-analysis",
+    "href": "index.html#reproducing-the-analysis",
+    "title": "Start here",
+    "section": "Reproducing the analysis",
+    "text": "Reproducing the analysis\nThe repository contains everything needed to reproduce the results from the cleaned data:\ndata/        cleaned analysis dataset and capture summary\nR/           shared functions: data preparation, priors, simulator, plot theme\nstan/        Stan model (in progress)\nscripts/     long computations (SBC, model fits), saved to results/\nfigures/     static figures (causal diagram)\n*.qmd        the pages of this site\nTo rebuild the site, clone the repository, install the R packages loaded in R/ and the pages, and run quarto render. Heavy computations (simulation-based calibration and model fits) are run separately from scripts/, and their saved outputs are read by the pages.",
+    "crumbs": [
+      "Start here"
+    ]
+  },
+  {
+    "objectID": "index.html#data-availability",
+    "href": "index.html#data-availability",
+    "title": "Start here",
+    "section": "Data availability",
+    "text": "Data availability\nThe analysis uses data/lizards-spring-2024.csv, which has one row per lizard marked in spring 2024. It includes every correction and exclusion as columns (corrections, exclusion), so each cleaning decision on the Data page can be traced. The raw field data are not part of the public repository. The cleaned file is produced from them by R/process-raw-data.R, which is included so that every cleaning step is documented.",
+    "crumbs": [
+      "Start here"
+    ]
+  },
+  {
+    "objectID": "01-data.html",
+    "href": "01-data.html",
+    "title": "1. Data",
+    "section": "",
+    "text": "Show code\nlibrary(tidyverse)\nsource(\"R/prepare-data.R\")\nsource(\"R/plot-theme.R\")\n\nlizards &lt;- read_csv(\"data/lizards-spring-2024.csv\", show_col_types = FALSE) |&gt;\n  mutate(species = factor(species, levels = species_levels))\ncaptures &lt;- read_csv(\"data/capture-summary.csv\", show_col_types = FALSE)\nanalysis &lt;- lizards |&gt; filter(is.na(exclusion))\nThis page goes from the field data to the dataset the model uses. Every correction and exclusion is listed with its reason, and the plots show the patterns that motivated the modelling choices on the Model page.",
+    "crumbs": [
+      "1. Data"
+    ]
+  },
+  {
+    "objectID": "01-data.html#field-data",
+    "href": "01-data.html#field-data",
+    "title": "1. Data",
+    "section": "Field data",
+    "text": "Field data\nLizards were captured in three censuses. Only in spring 2024 were lizards measured, performance-tested and marked. The fall 2024 census (6 months later) recorded only captures. Spring 2025 (12 months) is available only as a resighted/not-resighted record for each marked lizard.\n\n\nShow code\ncaptures |&gt;\n  pivot_wider(\n    names_from = season,\n    values_from = c(captures, recaptures_of_spring_lizards)\n  ) |&gt;\n  transmute(\n    species,\n    `spring 2024 captures` = `captures_spring 2024`,\n    `fall 2024 captures` = `captures_fall 2024`,\n    `of which recaptures` = `recaptures_of_spring_lizards_fall 2024`\n  ) |&gt;\n  knitr::kable()\n\n\n\n\nTable 1: Captures per census and species. Fall recaptures count capture events of lizards marked in spring 2024 (some were caught more than once).\n\n\n\n\n\n\n\n\n\n\n\n\nspecies\nspring 2024 captures\nfall 2024 captures\nof which recaptures\n\n\n\n\ncarolinensis\n51\n75\n5\n\n\ncristatellus\n626\n678\n118\n\n\ndistichus\n16\n9\n0\n\n\nequestris\n11\n23\n8\n\n\nsagrei\n57\n52\n9\n\n\n\n\n\n\n\n\nThe analysis uses the three focal species. Two other species were also marked but cannot support the analysis:\n\nA. distichus (16 lizards) had only 2 survivors.\nA. equestris (11 lizards) has no sprint or bite data. It is also far larger (SVL 116–149 mm) than the focal species (about 40–65 mm).\n\nThe cleaned dataset, data/lizards-spring-2024.csv, has one row for each of the 734 focal-species lizards marked in spring 2024. It is produced from the raw field data by R/process-raw-data.R.",
+    "crumbs": [
+      "1. Data"
+    ]
+  },
+  {
+    "objectID": "01-data.html#corrections",
+    "href": "01-data.html#corrections",
+    "title": "1. Data",
+    "section": "Corrections",
+    "text": "Corrections\n\n\nShow code\nreasons &lt;- tribble(\n  ~correction, ~reason,\n  \"sex from fall recapture\", \"Sex at the spring capture disagreed with the fall recapture. Older, larger lizards are easier to sex, so the latest record is used.\",\n  \"implausible date removed\", \"Recorded in February or March, but the season ran May to June, so almost certainly typos. Dates are not used in the model.\",\n  \"sprint temperature was lizard ID, removed\", \"The sprint body temperature (714) is the lizard's ID entered in the wrong column.\",\n  \"bite temperature 20.2 corrected to 30.2\", \"All trials were run near 30 °C, and this lizard's sprint temperature was 30.4 °C.\",\n  \"failed cling trial removed\", \"Scored 0 on both bark and leaf, so treated as a failed trial on both surfaces.\",\n  \"implausibly short hind toe removed\", \"Hind toe far shorter than expected for body size (see Morphology below), so set to missing.\"\n)\n\nlizards |&gt;\n  filter(!is.na(corrections)) |&gt;\n  separate_longer_delim(corrections, \"; \") |&gt;\n  count(correction = corrections, name = \"lizards\") |&gt;\n  left_join(reasons, by = \"correction\") |&gt;\n  arrange(desc(lizards)) |&gt;\n  knitr::kable()\n\n\n\n\nTable 2: Corrections applied to individual records. Each is recorded in the corrections column of the dataset.\n\n\n\n\n\n\n\n\n\n\n\ncorrection\nlizards\nreason\n\n\n\n\nsex from fall recapture\n13\nSex at the spring capture disagreed with the fall recapture. Older, larger lizards are easier to sex, so the latest record is used.\n\n\nimplausibly short hind toe removed\n12\nHind toe far shorter than expected for body size (see Morphology below), so set to missing.\n\n\nimplausible date removed\n4\nRecorded in February or March, but the season ran May to June, so almost certainly typos. Dates are not used in the model.\n\n\nbite temperature 20.2 corrected to 30.2\n1\nAll trials were run near 30 °C, and this lizard’s sprint temperature was 30.4 °C.\n\n\nfailed cling trial removed\n1\nScored 0 on both bark and leaf, so treated as a failed trial on both surfaces.\n\n\nsprint temperature was lizard ID, removed\n1\nThe sprint body temperature (714) is the lizard’s ID entered in the wrong column.",
+    "crumbs": [
+      "1. Data"
+    ]
+  },
+  {
+    "objectID": "01-data.html#exclusions",
+    "href": "01-data.html#exclusions",
+    "title": "1. Data",
+    "section": "Exclusions",
+    "text": "Exclusions\n\n\nShow code\ntribble(\n  ~exclusion, ~reason,\n  \"no tag\", \"No ID or tag was recorded, so the lizard could never be resighted and its recorded death is not informative.\",\n  \"tag shared by two lizards\", \"Two tags were each assigned to two different lizards, so survival cannot be attributed.\",\n  \"missing morphology\", \"Morphology is treated as known data in the model, so it must be complete. The lizard is missing toepad area or hind toe length.\"\n) |&gt;\n  left_join(count(lizards, exclusion, name = \"lizards\"), by = \"exclusion\") |&gt;\n  relocate(lizards, .after = exclusion) |&gt;\n  knitr::kable()\n\n\n\n\nTable 3: Lizards excluded from the analysis. They remain in the dataset with the reason in the exclusion column.\n\n\n\n\n\n\n\n\n\n\n\nexclusion\nlizards\nreason\n\n\n\n\nno tag\n5\nNo ID or tag was recorded, so the lizard could never be resighted and its recorded death is not informative.\n\n\ntag shared by two lizards\n4\nTwo tags were each assigned to two different lizards, so survival cannot be attributed.\n\n\nmissing morphology\n17\nMorphology is treated as known data in the model, so it must be complete. The lizard is missing toepad area or hind toe length.\n\n\n\n\n\n\n\n\nThe analysis sample has 708 lizards:\n\n\nShow code\nanalysis |&gt;\n  count(species, sex) |&gt;\n  pivot_wider(names_from = sex, values_from = n) |&gt;\n  mutate(total = female + male) |&gt;\n  knitr::kable()\n\n\n\n\nTable 4: Analysis sample by species and sex.\n\n\n\n\n\n\nspecies\nfemale\nmale\ntotal\n\n\n\n\ncaro\n29\n18\n47\n\n\ncris\n296\n309\n605\n\n\nsag\n27\n29\n56",
+    "crumbs": [
+      "1. Data"
+    ]
+  },
+  {
+    "objectID": "01-data.html#morphology",
+    "href": "01-data.html#morphology",
+    "title": "1. Data",
+    "section": "Morphology",
+    "text": "Morphology\nRaw linear measurements mostly measure body size. Within each species, every raw trait correlates strongly with snout–vent length (SVL). We therefore separate size, measured as log SVL, from shape, measured as size-corrected traits. Shape is the log trait minus log SVL, or minus 2 × log SVL for areas.\n\n\nShow code\nmorph_long &lt;- lizards |&gt;\n  filter(!exclusion %in% c(\"no tag\", \"tag shared by two lizards\")) |&gt;\n  transmute(\n    species, svl,\n    `hindlimb (mm)` = hindlimb,\n    `head width (mm)` = head_width,\n    `hind toe (mm)` = hind_toe_recorded,\n    `toepad area (mm²)` = toepad_area,\n    flagged = is.na(hind_toe) & !is.na(hind_toe_recorded)\n  ) |&gt;\n  pivot_longer(-c(species, svl, flagged), names_to = \"trait\") |&gt;\n  mutate(flagged = flagged & trait == \"hind toe (mm)\") |&gt;\n  filter(!is.na(value))\n\nggplot(morph_long, aes(svl, value, colour = species)) +\n  geom_point(data = \\(d) filter(d, !flagged), size = 1.2, alpha = 0.5, stroke = 0) +\n  geom_point(data = \\(d) filter(d, flagged), shape = 4, size = 2.5, stroke = 0.9, show.legend = FALSE) +\n  scale_x_log10() +\n  scale_y_log10() +\n  facet_wrap(~trait, scales = \"free_y\") +\n  scale_colour_species() +\n  labs(x = \"SVL (mm)\", y = NULL) +\n  theme_lizard() +\n  guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1)))\n\n\n\n\n\n\n\n\nFigure 1: Morphological traits against SVL (log scales). Traits scale tightly with size, so raw traits mostly re-measure body size. Crosses mark the hind toe lengths set to missing as implausibly short.\n\n\n\n\n\n\n\nShow code\nanalysis |&gt;\n  mutate(\n    lsvl = log(svl),\n    raw_hindlimb = log(hindlimb), rel_hindlimb = log(hindlimb) - lsvl,\n    raw_head_width = log(head_width), rel_head_width = log(head_width) - lsvl,\n    raw_hind_toe = log(hind_toe), rel_hind_toe = log(hind_toe) - lsvl,\n    raw_toepad_area = log(toepad_area), rel_toepad_area = log(toepad_area) - 2 * lsvl\n  ) |&gt;\n  group_by(species) |&gt;\n  summarise(across(starts_with(c(\"raw_\", \"rel_\")), \\(v) cor(v, lsvl))) |&gt;\n  pivot_longer(-species, names_to = c(\"version\", \"trait\"), names_pattern = \"^(raw|rel)_(.*)$\") |&gt;\n  mutate(\n    version = if_else(version == \"raw\", \"raw\", \"size-corrected\"),\n    trait = str_replace(trait, \"_\", \" \")\n  ) |&gt;\n  pivot_wider(names_from = c(species), values_from = value) |&gt;\n  arrange(trait, version) |&gt;\n  knitr::kable(digits = 2)\n\n\n\n\nTable 5: Within-species correlation with log SVL, before (raw log trait) and after (size-corrected) size correction.\n\n\n\n\n\n\nversion\ntrait\ncaro\ncris\nsag\n\n\n\n\nraw\nhead width\n0.97\n0.99\n0.98\n\n\nsize-corrected\nhead width\n0.71\n0.52\n0.01\n\n\nraw\nhind toe\n0.91\n0.96\n0.96\n\n\nsize-corrected\nhind toe\n0.15\n0.31\n0.45\n\n\nraw\nhindlimb\n0.97\n0.99\n0.98\n\n\nsize-corrected\nhindlimb\n0.15\n0.50\n0.26\n\n\nraw\ntoepad area\n0.91\n0.97\n0.95\n\n\nsize-corrected\ntoepad area\n0.44\n0.69\n0.66\n\n\n\n\n\n\n\n\nThe predictors used in the model are body size plus one size-corrected shape trait for each performance trait. Each shape trait was chosen a priori from anole functional morphology:\n\n\n\n\n\n\n\n\nPredictor\nDefinition\nLinked performance trait\n\n\n\n\nsize\n\\(\\log \\text{SVL}\\)\nall four\n\n\nrelative hindlimb\n\\(\\log \\text{hindlimb} - \\log \\text{SVL}\\)\nsprint speed\n\n\nrelative head width\n\\(\\log \\text{head width} - \\log \\text{SVL}\\)\nbite force\n\n\nrelative hind toe length\n\\(\\log \\text{hind toe} - \\log \\text{SVL}\\)\nclinging on bark (stand-in for claw size)\n\n\nrelative toepad area\n\\(\\log(\\text{fore} + \\text{hind toepad area}) - 2 \\log \\text{SVL}\\)\nclinging on leaves\n\n\n\nThe reasons for these choices:\n\nComposite limb lengths. forelimb and hindlimb are exact sums of their upper and lower segments, so segments and totals cannot be included together.\nHead length is dropped. In A. carolinensis (\\(n = 47\\)), relative head length correlates strongly with relative head width and with SVL. With so few lizards, both head traits could not be separated.\nClaws. Clinging to rough bark relies mainly on claws, and clinging to smooth leaves on adhesive toepads. Claws were not measured, so relative hind toe length stands in for claw size.\nToepads. Fore and hind toepad areas are summed into a single total.\nImplausibly short hind toes. Twelve hind toe lengths were implausibly short, for example 1.0–3.9 mm in lizards of about 43 mm SVL whose toes are typically about 7 mm. They are set to missing when the robust within-species \\(z\\)-score (median and MAD) of log hind toe − log SVL is below −5. The values show a clear gap: flagged lizards lie between −7.4 and −37, and the next lowest is −4.0.\nNo PCA. With one or two predictors per performance trait there is no dimensionality problem to solve. Principal components would also mix size and shape back together, and their loadings, and so their meaning, would differ among species.",
+    "crumbs": [
+      "1. Data"
+    ]
+  },
+  {
+    "objectID": "01-data.html#performance",
+    "href": "01-data.html#performance",
+    "title": "1. Data",
+    "section": "Performance",
+    "text": "Performance\n\n\n\n\n\n\n\n\nTrait\nVariable\nUnits / notes\n\n\n\n\nsprint speed\nsprint\nbest trial; cm/s (the raw column name says m/s, but values are cm/s)\n\n\nbite force\nbite\n\n\n\nclinging on bark\ncling_bark\n\n\n\nclinging on leaves\ncling_leaf\nzeros are below the 0.01 resolution\n\n\n\n\n\nShow code\nperf_long &lt;- analysis |&gt;\n  select(species, sex, sprint, bite, cling_bark, cling_leaf) |&gt;\n  pivot_longer(c(sprint, bite, cling_bark, cling_leaf), names_to = \"trait\") |&gt;\n  filter(!is.na(value)) |&gt;\n  mutate(\n    trait = factor(trait,\n      levels = c(\"sprint\", \"bite\", \"cling_bark\", \"cling_leaf\"),\n      labels = c(\"sprint speed (cm/s)\", \"bite force\", \"clinging, bark\", \"clinging, leaf\")\n    ),\n    censored = value == 0,\n    value = if_else(censored, leaf_limit / 2, value)\n  )\n\nggplot(perf_long, aes(sex, value, colour = species)) +\n  geom_boxplot(data = \\(d) filter(d, !censored), outlier.shape = NA, fill = NA, linewidth = 0.4, width = 0.5) +\n  geom_point(\n    data = \\(d) filter(d, !censored),\n    position = position_jitter(width = 0.15, height = 0, seed = 1),\n    size = 0.9, alpha = 0.4, stroke = 0\n  ) +\n  geom_point(\n    data = \\(d) filter(d, censored),\n    position = position_jitter(width = 0.15, height = 0, seed = 1),\n    shape = 2, size = 1.5\n  ) +\n  scale_y_log10() +\n  facet_grid(trait ~ species, scales = \"free_y\", labeller = labeller(species = species_names)) +\n  scale_colour_species(guide = \"none\") +\n  labs(x = NULL, y = NULL) +\n  theme_lizard() +\n  theme(strip.text.x = element_text(face = \"bold.italic\"))\n\n\n\n\n\n\n\n\nFigure 2: Performance by species and sex (log scale). Triangles at the bottom of the leaf panel are zeros, below the 0.01 resolution, which the model treats as left-censored.\n\n\n\n\n\n\n\nShow code\nanalysis |&gt;\n  group_by(species) |&gt;\n  summarise(\n    lizards = n(),\n    across(c(sprint, bite, cling_bark, cling_leaf), \\(x) sum(is.na(x)), .names = \"missing {.col}\"),\n    `leaf zeros` = sum(cling_leaf_censored, na.rm = TRUE)\n  ) |&gt;\n  knitr::kable()\n\n\n\n\nTable 6: Missing performance values and leaf-clinging zeros by species. The model estimates both as unknown quantities, so the lizards stay in the analysis.\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nspecies\nlizards\nmissing sprint\nmissing bite\nmissing cling_bark\nmissing cling_leaf\nleaf zeros\n\n\n\n\ncaro\n47\n1\n1\n1\n0\n0\n\n\ncris\n605\n48\n5\n15\n13\n20\n\n\nsag\n56\n7\n0\n0\n0\n2\n\n\n\n\n\n\n\n\n\n\nShow code\nleaf &lt;- analysis$cling_leaf[!is.na(analysis$cling_leaf)]\nskew &lt;- function(v) mean((v - mean(v))^3) / sd(v)^3\nsprint_z &lt;- analysis |&gt;\n  filter(!is.na(sprint)) |&gt;\n  group_by(species, sex) |&gt;\n  mutate(z = (log(sprint) - mean(log(sprint))) / sd(log(sprint))) |&gt;\n  ungroup()\n\n\nSome features of these distributions shape the model:\n\nLeaf-clinging zeros. 22 lizards scored 0 on leaves. The smallest non-zero value is 0.01, the resolution of the instrument, so a zero means “below 0.01” rather than no clinging at all. The model treats these values as left-censored, estimating each somewhere below the limit.\nWhy not log(x + 1). The common alternative of adding a constant before taking logs does not work here. For values this small, log(x + 1) is nearly the raw value (correlation 0.996), and the skew barely changes: 4.4 raw and 3.5 after the transform, compared with 0.8 for log of the non-zero values. Results would also depend on the arbitrary constant.\nSprint speed has a heavy lower tail. 8 lizards are more than 3 SD below their species × sex mean, down to 9.7 cm/s. These are probably trials where the lizard did not run properly. The model currently uses normal residuals; heavier-tailed (Student-t) residuals are a possible extension.\nSprint speed is coarsely measured. There are only 29 distinct sprint values, consistent with a fixed track length timed in coarse steps. Near 150 cm/s this is about ±10% rounding.",
+    "crumbs": [
+      "1. Data"
+    ]
+  },
+  {
+    "objectID": "01-data.html#body-temperature-at-the-trial",
+    "href": "01-data.html#body-temperature-at-the-trial",
+    "title": "1. Data",
+    "section": "Body temperature at the trial",
+    "text": "Body temperature at the trial\nBody temperature was recorded at the sprint and bite trials, but not at the clinging trials.\n\n\nShow code\ntemp_long &lt;- bind_rows(\n  analysis |&gt; transmute(species, sex, trait = \"Sprint speed\", tb = tb_sprint, perf = sprint),\n  analysis |&gt; transmute(species, sex, trait = \"Bite force\", tb = tb_bite, perf = bite)\n) |&gt;\n  filter(!is.na(tb), !is.na(perf)) |&gt;\n  group_by(trait, species, sex) |&gt;\n  mutate(z = (log(perf) - mean(log(perf))) / sd(log(perf))) |&gt;\n  ungroup() |&gt;\n  mutate(trait = factor(trait, c(\"Sprint speed\", \"Bite force\")))\n\nggplot(temp_long, aes(tb, z, colour = species)) +\n  geom_hline(yintercept = 0, colour = \"#d9d8d4\", linewidth = 0.4) +\n  geom_point(\n    position = position_jitter(width = 0.04, height = 0, seed = 1),\n    size = 1.4, alpha = 0.55, stroke = 0\n  ) +\n  geom_smooth(method = \"lm\", formula = y ~ x, se = FALSE, linewidth = 0.8) +\n  facet_wrap(~trait, scales = \"free_x\") +\n  scale_colour_species() +\n  labs(x = \"Body temperature at trial (°C)\", y = \"Standardised log performance (SD)\") +\n  theme_lizard() +\n  guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1, linewidth = 0)))\n\n\n\n\n\n\n\n\nFigure 3: Log performance, standardised within species × sex to remove mean differences, against body temperature at the trial. Lines are linear fits per species. Points are jittered ±0.04 °C because temperatures were recorded to 0.1 °C.\n\n\n\n\n\n\n\nShow code\ntemp_slopes &lt;- temp_long |&gt;\n  group_by(trait) |&gt;\n  summarise(slope = coef(lm(z ~ tb))[2])\n\n\nWithin species and sex, sprint speed increases with temperature (pooled slope 0.15 SD per °C). Bite force increases clearly only in A. carolinensis. Temperature therefore enters the model as a predictor of sprint and bite. Over this narrow range of temperatures a linear effect is adequate.",
+    "crumbs": [
+      "1. Data"
+    ]
+  },
+  {
+    "objectID": "01-data.html#survival-and-resighting",
+    "href": "01-data.html#survival-and-resighting",
+    "title": "1. Data",
+    "section": "Survival and resighting",
+    "text": "Survival and resighting\nEach lizard has a resighting history: whether it was seen in fall 2024 (\\(y_2\\)) and whether it was seen in spring 2025 (\\(y_3\\)). The recorded “6-month survival” is 1 if the lizard was seen at either census. It therefore counts a lizard that was alive but never seen again as dead.\n\n\nShow code\nanalysis |&gt;\n  mutate(history = paste0(seen_fall, surv_12m)) |&gt;\n  count(species, history) |&gt;\n  pivot_wider(names_from = history, values_from = n, values_fill = 0) |&gt;\n  mutate(\n    `naive 6-month survival` = sprintf(\"%.2f\", (`01` + `10` + `11`) / (`00` + `01` + `10` + `11`)),\n    `fall miss rate` = sprintf(\"%d/%d = %.2f\", `01`, `01` + `11`, `01` / (`01` + `11`))\n  ) |&gt;\n  select(species, `00`, `01`, `10`, `11`, `naive 6-month survival`, `fall miss rate`) |&gt;\n  knitr::kable()\n\n\n\n\nTable 7: Resighting histories (\\(y_2 y_3\\): 1 = seen) and the naive fall miss rate among lizards known to be alive in fall because they were seen in spring 2025.\n\n\n\n\n\n\nspecies\n00\n01\n10\n11\nnaive 6-month survival\nfall miss rate\n\n\n\n\ncaro\n38\n5\n0\n4\n0.19\n5/9 = 0.56\n\n\ncris\n481\n12\n70\n42\n0.20\n12/54 = 0.22\n\n\nsag\n47\n1\n6\n2\n0.16\n1/3 = 0.33\n\n\n\n\n\n\n\n\nLive lizards are often missed in fall, and A. carolinensis is missed more often than it is seen. Species differences in naive survival therefore partly reflect how easy each species is to find. The model estimates fall detection jointly with survival, using lizards seen in spring 2025 but missed in fall.",
+    "crumbs": [
+      "1. Data"
+    ]
+  },
+  {
+    "objectID": "01-data.html#the-analysis-dataset",
+    "href": "01-data.html#the-analysis-dataset",
+    "title": "1. Data",
+    "section": "The analysis dataset",
+    "text": "The analysis dataset\nprepare_data() in R/prepare-data.R converts the cleaned data into the form the model uses. It log-transforms and standardises traits within species, standardises trial temperatures, and marks missing and censored performance values.\n\n\nShow code\ndesign &lt;- prepare_data(lizards)\ntibble(\n  quantity = c(\"lizards\", \"species\", \"performance traits\", \"morphological predictors\",\n               \"observed performance values\", \"censored leaf values\",\n               \"seen in fall 2024\", \"seen in spring 2025\"),\n  value = c(design$N, design$S, design$J, design$K, sum(design$obs) - sum(design$cens),\n            sum(design$cens), sum(design$y2), sum(design$y3))\n) |&gt;\n  knitr::kable()\n\n\n\n\n\nquantity\nvalue\n\n\n\n\nlizards\n708\n\n\nspecies\n3\n\n\nperformance traits\n4\n\n\nmorphological predictors\n5\n\n\nobserved performance values\n2719\n\n\ncensored leaf values\n22\n\n\nseen in fall 2024\n124\n\n\nseen in spring 2025\n66",
+    "crumbs": [
+      "1. Data"
+    ]
+  },
+  {
+    "objectID": "03-validation.html",
+    "href": "03-validation.html",
+    "title": "3. Validation",
+    "section": "",
+    "text": "NoteIn progress\n\n\n\nThis page will be filled in once the Stan model is written. The simulator it relies on is already in R/simulate.R.",
+    "crumbs": [
+      "3. Validation"
+    ]
+  },
+  {
+    "objectID": "03-validation.html#planned-contents",
+    "href": "03-validation.html#planned-contents",
+    "title": "3. Validation",
+    "section": "Planned contents",
+    "text": "Planned contents\n\nThe simulator. It conditions on the observed design: species, sex, standardised morphology, trial body temperatures and the observed pattern of missing performance. From that design it draws parameters from the priors (R/priors.R), then performance, survival and resightings. Recovery checks confirm that it generates data consistent with the model’s likelihood.\nPrior predictive checks. Simulated resighting rates, naive survival, leaf censoring and performance distributions are compared with the observed data, to confirm the priors are plausible but not restrictive.\nSimulation-based calibration (SBC) for M1 and M2, shown as rank histograms and ECDF difference plots for every parameter, together with sampler diagnostics.\nPower to detect direct effects. How often the posterior for \\(\\gamma\\) excludes 0 when the true direct effect is biologically meaningful, given the sample sizes.",
+    "crumbs": [
+      "3. Validation"
+    ]
+  },
+  {
+    "objectID": "05-synthesis.html",
+    "href": "05-synthesis.html",
+    "title": "5. Synthesis",
+    "section": "",
+    "text": "NoteIn progress\n\n\n\nThis page will be filled in after the models are fitted.",
+    "crumbs": [
+      "5. Synthesis"
+    ]
+  },
+  {
+    "objectID": "05-synthesis.html#planned-contents",
+    "href": "05-synthesis.html#planned-contents",
+    "title": "5. Synthesis",
+    "section": "Planned contents",
+    "text": "Planned contents\n\nDirect vs. indirect effects of each morphological trait on survival, per species: is morphology’s effect mediated by performance?\nMorphology → performance: size and shape effects on sprint, bite and clinging.\nSelection on performance: survival as a function of each performance trait (linear and quadratic selection).\nSpecies comparison and the role of detection: detection-corrected vs. naive survival.\nInterpretation, limitations and next steps, including claw measurements and heavier-tailed sprint residuals.",
+    "crumbs": [
+      "5. Synthesis"
+    ]
+  }
+]
