@@ -1,0 +1,29 @@
+---
+title: "3. Validation"
+subtitle: "Prior predictive checks and simulation-based calibration"
+---
+
+::: {.callout-note}
+## In progress
+This page will be filled in once the Stan model is written. The
+simulator it relies on is already in `R/simulate.R`.
+:::
+
+## Planned contents
+
+1. **The simulator.** It conditions on the observed design: species,
+   sex, standardised morphology, trial body temperatures and the
+   observed pattern of missing performance. From that design it draws
+   parameters from the priors (`R/priors.R`), then performance, survival
+   and resightings. Recovery checks confirm that it generates data
+   consistent with the model's likelihood.
+2. **Prior predictive checks.** Simulated resighting rates, naive
+   survival, leaf censoring and performance distributions are compared
+   with the observed data, to confirm the priors are plausible but not
+   restrictive.
+3. **Simulation-based calibration (SBC)** for M1 and M2, shown as rank
+   histograms and ECDF difference plots for every parameter, together
+   with sampler diagnostics.
+4. **Power to detect direct effects.** How often the posterior for
+   $\gamma$ excludes 0 when the true direct effect is biologically
+   meaningful, given the sample sizes.

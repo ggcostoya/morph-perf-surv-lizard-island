@@ -1,0 +1,397 @@
+---
+title: "1. Data"
+subtitle: "Sources, cleaning decisions and exploratory plots"
+---
+
+```{r}
+#| label: setup
+library(tidyverse)
+source("R/prepare-data.R")
+source("R/plot-theme.R")
+
+lizards <- read_csv("data/lizards-spring-2024.csv", show_col_types = FALSE) |>
+  mutate(species = factor(species, levels = species_levels))
+captures <- read_csv("data/capture-summary.csv", show_col_types = FALSE)
+analysis <- lizards |> filter(is.na(exclusion))
+```
+
+This page goes from the field data to the dataset the model uses.
+Every correction and exclusion is listed with its reason, and the plots
+show the patterns that motivated the modelling choices on the
+[Model page](02-model.qmd).
+
+## Field data
+
+Lizards were captured in three censuses. Only in **spring 2024** were
+lizards measured, performance-tested and marked. The **fall 2024**
+census (6 months later) recorded only captures. **Spring 2025**
+(12 months) is available only as a resighted/not-resighted record for
+each marked lizard.
+
+```{r}
+#| label: tbl-captures
+#| tbl-cap: "Captures per census and species. Fall recaptures count capture events of lizards marked in spring 2024 (some were caught more than once)."
+captures |>
+  pivot_wider(
+    names_from = season,
+    values_from = c(captures, recaptures_of_spring_lizards)
+  ) |>
+  transmute(
+    species,
+    `spring 2024 captures` = `captures_spring 2024`,
+    `fall 2024 captures` = `captures_fall 2024`,
+    `of which recaptures` = `recaptures_of_spring_lizards_fall 2024`
+  ) |>
+  knitr::kable()
+```
+
+The analysis uses the three focal species. Two other species were also
+marked but cannot support the analysis:
+
+- ***A. distichus*** (16 lizards) had only 2 survivors.
+- ***A. equestris*** (11 lizards) has no sprint or bite data. It is also
+  far larger (SVL 116--149 mm) than the focal species (about 40--65 mm).
+
+The cleaned dataset, `data/lizards-spring-2024.csv`, has one row for
+each of the `r nrow(lizards)` focal-species lizards marked in spring
+2024. It is produced from the raw field data by
+`R/process-raw-data.R`.
+
+## Corrections
+
+```{r}
+#| label: tbl-corrections
+#| tbl-cap: "Corrections applied to individual records. Each is recorded in the `corrections` column of the dataset."
+reasons <- tribble(
+  ~correction, ~reason,
+  "sex from fall recapture", "Sex at the spring capture disagreed with the fall recapture. Older, larger lizards are easier to sex, so the latest record is used.",
+  "implausible date removed", "Recorded in February or March, but the season ran May to June, so almost certainly typos. Dates are not used in the model.",
+  "sprint temperature was lizard ID, removed", "The sprint body temperature (714) is the lizard's ID entered in the wrong column.",
+  "bite temperature 20.2 corrected to 30.2", "All trials were run near 30 °C, and this lizard's sprint temperature was 30.4 °C.",
+  "failed cling trial removed", "Scored 0 on both bark and leaf, so treated as a failed trial on both surfaces.",
+  "implausibly short hind toe removed", "Hind toe far shorter than expected for body size (see Morphology below), so set to missing."
+)
+
+lizards |>
+  filter(!is.na(corrections)) |>
+  separate_longer_delim(corrections, "; ") |>
+  count(correction = corrections, name = "lizards") |>
+  left_join(reasons, by = "correction") |>
+  arrange(desc(lizards)) |>
+  knitr::kable()
+```
+
+## Exclusions
+
+```{r}
+#| label: tbl-exclusions
+#| tbl-cap: "Lizards excluded from the analysis. They remain in the dataset with the reason in the `exclusion` column."
+tribble(
+  ~exclusion, ~reason,
+  "no tag", "No ID or tag was recorded, so the lizard could never be resighted and its recorded death is not informative.",
+  "tag shared by two lizards", "Two tags were each assigned to two different lizards, so survival cannot be attributed.",
+  "missing morphology", "Morphology is treated as known data in the model, so it must be complete. The lizard is missing toepad area or hind toe length."
+) |>
+  left_join(count(lizards, exclusion, name = "lizards"), by = "exclusion") |>
+  relocate(lizards, .after = exclusion) |>
+  knitr::kable()
+```
+
+The analysis sample has **`r nrow(analysis)` lizards**:
+
+```{r}
+#| label: tbl-sample
+#| tbl-cap: "Analysis sample by species and sex."
+analysis |>
+  count(species, sex) |>
+  pivot_wider(names_from = sex, values_from = n) |>
+  mutate(total = female + male) |>
+  knitr::kable()
+```
+
+## Morphology
+
+Raw linear measurements mostly measure body size. Within each species,
+every raw trait correlates strongly with snout--vent length (SVL). We
+therefore separate **size**, measured as log SVL, from **shape**,
+measured as size-corrected traits. Shape is the log trait minus log
+SVL, or minus 2 × log SVL for areas.
+
+```{r}
+#| label: fig-allometry
+#| fig-cap: "Morphological traits against SVL (log scales). Traits scale tightly with size, so raw traits mostly re-measure body size. Crosses mark the hind toe lengths set to missing as implausibly short."
+#| fig-height: 6
+morph_long <- lizards |>
+  filter(!exclusion %in% c("no tag", "tag shared by two lizards")) |>
+  transmute(
+    species, svl,
+    `hindlimb (mm)` = hindlimb,
+    `head width (mm)` = head_width,
+    `hind toe (mm)` = hind_toe_recorded,
+    `toepad area (mm²)` = toepad_area,
+    flagged = is.na(hind_toe) & !is.na(hind_toe_recorded)
+  ) |>
+  pivot_longer(-c(species, svl, flagged), names_to = "trait") |>
+  mutate(flagged = flagged & trait == "hind toe (mm)") |>
+  filter(!is.na(value))
+
+ggplot(morph_long, aes(svl, value, colour = species)) +
+  geom_point(data = \(d) filter(d, !flagged), size = 1.2, alpha = 0.5, stroke = 0) +
+  geom_point(data = \(d) filter(d, flagged), shape = 4, size = 2.5, stroke = 0.9, show.legend = FALSE) +
+  scale_x_log10() +
+  scale_y_log10() +
+  facet_wrap(~trait, scales = "free_y") +
+  scale_colour_species() +
+  labs(x = "SVL (mm)", y = NULL) +
+  theme_lizard() +
+  guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1)))
+```
+
+```{r}
+#| label: tbl-size-correlation
+#| tbl-cap: "Within-species correlation with log SVL, before (raw log trait) and after (size-corrected) size correction."
+analysis |>
+  mutate(
+    lsvl = log(svl),
+    raw_hindlimb = log(hindlimb), rel_hindlimb = log(hindlimb) - lsvl,
+    raw_head_width = log(head_width), rel_head_width = log(head_width) - lsvl,
+    raw_hind_toe = log(hind_toe), rel_hind_toe = log(hind_toe) - lsvl,
+    raw_toepad_area = log(toepad_area), rel_toepad_area = log(toepad_area) - 2 * lsvl
+  ) |>
+  group_by(species) |>
+  summarise(across(starts_with(c("raw_", "rel_")), \(v) cor(v, lsvl))) |>
+  pivot_longer(-species, names_to = c("version", "trait"), names_pattern = "^(raw|rel)_(.*)$") |>
+  mutate(
+    version = if_else(version == "raw", "raw", "size-corrected"),
+    trait = str_replace(trait, "_", " ")
+  ) |>
+  pivot_wider(names_from = c(species), values_from = value) |>
+  arrange(trait, version) |>
+  knitr::kable(digits = 2)
+```
+
+The predictors used in the model are body size plus one size-corrected
+shape trait for each performance trait. Each shape trait was chosen *a
+priori* from anole functional morphology:
+
+| Predictor | Definition | Linked performance trait |
+|---|---|---|
+| size | $\log \text{SVL}$ | all four |
+| relative hindlimb | $\log \text{hindlimb} - \log \text{SVL}$ | sprint speed |
+| relative head width | $\log \text{head width} - \log \text{SVL}$ | bite force |
+| relative hind toe length | $\log \text{hind toe} - \log \text{SVL}$ | clinging on bark (stand-in for claw size) |
+| relative toepad area | $\log(\text{fore} + \text{hind toepad area}) - 2 \log \text{SVL}$ | clinging on leaves |
+
+The reasons for these choices:
+
+- **Composite limb lengths.** `forelimb` and `hindlimb` are exact sums of
+  their upper and lower segments, so segments and totals cannot be
+  included together.
+- **Head length is dropped.** In *A. carolinensis* ($n = 47$), relative
+  head length correlates strongly with relative head width and with SVL.
+  With so few lizards, both head traits could not be separated.
+- **Claws.** Clinging to rough bark relies mainly on claws, and clinging
+  to smooth leaves on adhesive toepads. Claws were not measured, so
+  relative hind toe length stands in for claw size.
+- **Toepads.** Fore and hind toepad areas are summed into a single
+  total.
+- **Implausibly short hind toes.** Twelve hind toe lengths were
+  implausibly short, for example 1.0--3.9 mm in lizards of about 43 mm
+  SVL whose toes are typically about 7 mm. They are set to missing when
+  the robust within-species $z$-score (median and MAD) of log hind toe
+  − log SVL is below −5. The values show a clear gap: flagged lizards
+  lie between −7.4 and −37, and the next lowest is −4.0.
+- **No PCA.** With one or two predictors per performance trait there is
+  no dimensionality problem to solve. Principal components would also
+  mix size and shape back together, and their loadings, and so their
+  meaning, would differ among species.
+
+## Performance
+
+| Trait | Variable | Units / notes |
+|---|---|---|
+| sprint speed | `sprint` | best trial; cm/s (the raw column name says m/s, but values are cm/s) |
+| bite force | `bite` | |
+| clinging on bark | `cling_bark` | |
+| clinging on leaves | `cling_leaf` | zeros are below the 0.01 resolution |
+
+```{r}
+#| label: fig-performance
+#| fig-cap: "Performance by species and sex (log scale). Triangles at the bottom of the leaf panel are zeros, below the 0.01 resolution, which the model treats as left-censored."
+#| fig-height: 7
+perf_long <- analysis |>
+  select(species, sex, sprint, bite, cling_bark, cling_leaf) |>
+  pivot_longer(c(sprint, bite, cling_bark, cling_leaf), names_to = "trait") |>
+  filter(!is.na(value)) |>
+  mutate(
+    trait = factor(trait,
+      levels = c("sprint", "bite", "cling_bark", "cling_leaf"),
+      labels = c("sprint speed (cm/s)", "bite force", "clinging, bark", "clinging, leaf")
+    ),
+    censored = value == 0,
+    value = if_else(censored, leaf_limit / 2, value)
+  )
+
+ggplot(perf_long, aes(sex, value, colour = species)) +
+  geom_boxplot(data = \(d) filter(d, !censored), outlier.shape = NA, fill = NA, linewidth = 0.4, width = 0.5) +
+  geom_point(
+    data = \(d) filter(d, !censored),
+    position = position_jitter(width = 0.15, height = 0, seed = 1),
+    size = 0.9, alpha = 0.4, stroke = 0
+  ) +
+  geom_point(
+    data = \(d) filter(d, censored),
+    position = position_jitter(width = 0.15, height = 0, seed = 1),
+    shape = 2, size = 1.5
+  ) +
+  scale_y_log10() +
+  facet_grid(trait ~ species, scales = "free_y", labeller = labeller(species = species_names)) +
+  scale_colour_species(guide = "none") +
+  labs(x = NULL, y = NULL) +
+  theme_lizard() +
+  theme(strip.text.x = element_text(face = "bold.italic"))
+```
+
+```{r}
+#| label: tbl-missing
+#| tbl-cap: "Missing performance values and leaf-clinging zeros by species. The model estimates both as unknown quantities, so the lizards stay in the analysis."
+analysis |>
+  group_by(species) |>
+  summarise(
+    lizards = n(),
+    across(c(sprint, bite, cling_bark, cling_leaf), \(x) sum(is.na(x)), .names = "missing {.col}"),
+    `leaf zeros` = sum(cling_leaf_censored, na.rm = TRUE)
+  ) |>
+  knitr::kable()
+```
+
+```{r}
+#| label: performance-numbers
+leaf <- analysis$cling_leaf[!is.na(analysis$cling_leaf)]
+skew <- function(v) mean((v - mean(v))^3) / sd(v)^3
+sprint_z <- analysis |>
+  filter(!is.na(sprint)) |>
+  group_by(species, sex) |>
+  mutate(z = (log(sprint) - mean(log(sprint))) / sd(log(sprint))) |>
+  ungroup()
+```
+
+Some features of these distributions shape the model:
+
+- **Leaf-clinging zeros.** `r sum(leaf == 0)` lizards scored 0 on
+  leaves. The smallest non-zero value is 0.01, the resolution of the
+  instrument, so a zero means "below 0.01" rather than no clinging at
+  all. The model treats these values as left-censored, estimating each
+  somewhere below the limit.
+- **Why not log(x + 1).** The common alternative of adding a constant
+  before taking logs does not work here. For values this small,
+  log(x + 1) is nearly the raw value (correlation
+  `r round(cor(leaf, log(leaf + 1)), 3)`), and the skew barely changes:
+  `r round(skew(leaf), 1)` raw and `r round(skew(log(leaf + 1)), 1)`
+  after the transform, compared with `r round(skew(log(leaf[leaf > 0])), 1)`
+  for log of the non-zero values. Results would also depend on the
+  arbitrary constant.
+- **Sprint speed has a heavy lower tail.**
+  `r sum(sprint_z$z < -3)` lizards are more than 3 SD below their
+  species × sex mean, down to `r round(min(analysis$sprint, na.rm = TRUE), 1)` cm/s.
+  These are probably trials where the lizard did not run properly. The
+  model currently uses normal residuals; heavier-tailed (Student-t)
+  residuals are a possible extension.
+- **Sprint speed is coarsely measured.** There are only
+  `r n_distinct(na.omit(analysis$sprint))` distinct sprint values,
+  consistent with a fixed track length timed in coarse steps. Near
+  150 cm/s this is about ±10% rounding.
+
+## Body temperature at the trial
+
+Body temperature was recorded at the sprint and bite trials, but not at
+the clinging trials.
+
+```{r}
+#| label: fig-temperature
+#| fig-cap: "Log performance, standardised within species × sex to remove mean differences, against body temperature at the trial. Lines are linear fits per species. Points are jittered ±0.04 °C because temperatures were recorded to 0.1 °C."
+temp_long <- bind_rows(
+  analysis |> transmute(species, sex, trait = "Sprint speed", tb = tb_sprint, perf = sprint),
+  analysis |> transmute(species, sex, trait = "Bite force", tb = tb_bite, perf = bite)
+) |>
+  filter(!is.na(tb), !is.na(perf)) |>
+  group_by(trait, species, sex) |>
+  mutate(z = (log(perf) - mean(log(perf))) / sd(log(perf))) |>
+  ungroup() |>
+  mutate(trait = factor(trait, c("Sprint speed", "Bite force")))
+
+ggplot(temp_long, aes(tb, z, colour = species)) +
+  geom_hline(yintercept = 0, colour = "#d9d8d4", linewidth = 0.4) +
+  geom_point(
+    position = position_jitter(width = 0.04, height = 0, seed = 1),
+    size = 1.4, alpha = 0.55, stroke = 0
+  ) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, linewidth = 0.8) +
+  facet_wrap(~trait, scales = "free_x") +
+  scale_colour_species() +
+  labs(x = "Body temperature at trial (°C)", y = "Standardised log performance (SD)") +
+  theme_lizard() +
+  guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1, linewidth = 0)))
+```
+
+```{r}
+#| label: temperature-slopes
+temp_slopes <- temp_long |>
+  group_by(trait) |>
+  summarise(slope = coef(lm(z ~ tb))[2])
+```
+
+Within species and sex, sprint speed increases with temperature (pooled
+slope `r round(temp_slopes$slope[temp_slopes$trait == "Sprint speed"], 2)`
+SD per °C). Bite force increases clearly only in *A. carolinensis*.
+Temperature therefore enters the model as a predictor of sprint and
+bite. Over this narrow range of temperatures a linear effect is
+adequate.
+
+## Survival and resighting
+
+Each lizard has a resighting history: whether it was seen in fall 2024
+($y_2$) and whether it was seen in spring 2025 ($y_3$). The recorded
+"6-month survival" is 1 if the lizard was seen at either census. It
+therefore counts a lizard that was alive but never seen again as dead.
+
+```{r}
+#| label: tbl-histories
+#| tbl-cap: "Resighting histories ($y_2 y_3$: 1 = seen) and the naive fall miss rate among lizards known to be alive in fall because they were seen in spring 2025."
+analysis |>
+  mutate(history = paste0(seen_fall, surv_12m)) |>
+  count(species, history) |>
+  pivot_wider(names_from = history, values_from = n, values_fill = 0) |>
+  mutate(
+    `naive 6-month survival` = sprintf("%.2f", (`01` + `10` + `11`) / (`00` + `01` + `10` + `11`)),
+    `fall miss rate` = sprintf("%d/%d = %.2f", `01`, `01` + `11`, `01` / (`01` + `11`))
+  ) |>
+  select(species, `00`, `01`, `10`, `11`, `naive 6-month survival`, `fall miss rate`) |>
+  knitr::kable()
+```
+
+Live lizards are often missed in fall, and *A. carolinensis* is missed
+more often than it is seen. Species differences in naive survival
+therefore partly reflect how easy each species is to find. The model
+estimates fall detection jointly with survival, using lizards seen in
+spring 2025 but missed in fall.
+
+## The analysis dataset
+
+`prepare_data()` in `R/prepare-data.R` converts the cleaned data into
+the form the model uses. It log-transforms and standardises traits
+within species, standardises trial temperatures, and marks missing and
+censored performance values.
+
+```{r}
+#| label: prepared
+design <- prepare_data(lizards)
+tibble(
+  quantity = c("lizards", "species", "performance traits", "morphological predictors",
+               "observed performance values", "censored leaf values",
+               "seen in fall 2024", "seen in spring 2025"),
+  value = c(design$N, design$S, design$J, design$K, sum(design$obs) - sum(design$cens),
+            sum(design$cens), sum(design$y2), sum(design$y3))
+) |>
+  knitr::kable()
+```

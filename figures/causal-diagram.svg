@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" width="960" height="720" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
+    </marker>
+    <marker id="arrow-sex" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7A4F9A"/>
+    </marker>
+    <marker id="arrow-direct" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#B23A3A"/>
+    </marker>
+    <marker id="arrow-temp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8A6D3B"/>
+    </marker>
+  </defs>
+
+  <!-- panels -->
+  <rect x="20" y="110" width="215" height="520" rx="10" fill="#EEF4FA" stroke="#3B6EA5" stroke-width="1.2"/>
+  <text x="127" y="134" text-anchor="middle" font-size="15" font-weight="bold" fill="#3B6EA5">Morphology</text>
+  <text x="127" y="152" text-anchor="middle" font-size="12" fill="#3B6EA5">observed, conditioned on</text>
+
+  <rect x="290" y="110" width="195" height="520" rx="10" fill="#EEF7F0" stroke="#3A8A55" stroke-width="1.2"/>
+  <text x="387" y="134" text-anchor="middle" font-size="15" font-weight="bold" fill="#3A8A55">Performance</text>
+  <text x="387" y="152" text-anchor="middle" font-size="12" fill="#3A8A55">missing = latent; leaf zeros censored</text>
+
+  <rect x="540" y="110" width="170" height="520" rx="10" fill="#FDF3EA" stroke="#C06A1B" stroke-width="1.2"/>
+  <text x="625" y="134" text-anchor="middle" font-size="15" font-weight="bold" fill="#C06A1B">Survival</text>
+  <text x="625" y="152" text-anchor="middle" font-size="12" fill="#C06A1B">latent state</text>
+
+  <rect x="765" y="110" width="175" height="520" rx="10" fill="#F3F3F3" stroke="#666" stroke-width="1.2"/>
+  <text x="852" y="134" text-anchor="middle" font-size="15" font-weight="bold" fill="#555">Detection</text>
+  <text x="852" y="152" text-anchor="middle" font-size="12" fill="#555">observed resightings</text>
+
+  <!-- sex -->
+  <rect x="530" y="22" width="190" height="44" rx="22" fill="#F3EAF8" stroke="#7A4F9A" stroke-width="1.5"/>
+  <text x="625" y="50" text-anchor="middle" font-size="15" fill="#4A2C63">Sex (male<tspan font-style="italic">ᵢ</tspan>)</text>
+  <path d="M 545 60 L 400 108" stroke="#7A4F9A" stroke-width="1.6" fill="none" marker-end="url(#arrow-sex)"/>
+  <path d="M 625 66 L 625 108" stroke="#7A4F9A" stroke-width="1.6" fill="none" marker-end="url(#arrow-sex)"/>
+  <path d="M 705 60 L 840 108" stroke="#7A4F9A" stroke-width="1.6" fill="none" marker-end="url(#arrow-sex)"/>
+  <text x="455" y="76" text-anchor="middle" font-size="13" font-style="italic" fill="#7A4F9A">δ</text>
+  <text x="638" y="92" font-size="13" font-style="italic" fill="#7A4F9A">c</text>
+  <text x="790" y="76" text-anchor="middle" font-size="13" font-style="italic" fill="#7A4F9A">ζ</text>
+
+  <!-- morphology nodes -->
+  <g font-size="14" text-anchor="middle">
+    <rect x="40" y="175" width="175" height="46" rx="6" fill="#DCE9F5" stroke="#3B6EA5" stroke-width="1.5"/>
+    <text x="127.5" y="203">log SVL (size)</text>
+    <rect x="40" y="263" width="175" height="46" rx="6" fill="#DCE9F5" stroke="#3B6EA5" stroke-width="1.5"/>
+    <text x="127.5" y="291">rel. hindlimb</text>
+    <rect x="40" y="351" width="175" height="46" rx="6" fill="#DCE9F5" stroke="#3B6EA5" stroke-width="1.5"/>
+    <text x="127.5" y="379">rel. head width</text>
+    <rect x="40" y="439" width="175" height="46" rx="6" fill="#DCE9F5" stroke="#3B6EA5" stroke-width="1.5"/>
+    <text x="127.5" y="467">rel. hind toe (claw)</text>
+    <rect x="40" y="527" width="175" height="46" rx="6" fill="#DCE9F5" stroke="#3B6EA5" stroke-width="1.5"/>
+    <text x="127.5" y="555">rel. toepad area</text>
+  </g>
+
+  <!-- performance nodes -->
+  <g font-size="14" text-anchor="middle">
+    <rect x="305" y="263" width="165" height="46" rx="6" fill="#D8EEDD" stroke="#3A8A55" stroke-width="1.5"/>
+    <text x="387.5" y="291">log sprint speed</text>
+    <rect x="305" y="351" width="165" height="46" rx="6" fill="#D8EEDD" stroke="#3A8A55" stroke-width="1.5"/>
+    <text x="387.5" y="379">log bite force</text>
+    <rect x="305" y="439" width="165" height="46" rx="6" fill="#D8EEDD" stroke="#3A8A55" stroke-width="1.5"/>
+    <text x="387.5" y="467">log cling (bark)</text>
+    <rect x="305" y="527" width="165" height="46" rx="6" fill="#D8EEDD" stroke="#3A8A55" stroke-width="1.5"/>
+    <text x="387.5" y="555">log cling (leaf)</text>
+  </g>
+  <text x="387" y="606" text-anchor="middle" font-size="12" fill="#3A8A55">residuals correlated (<tspan font-style="italic">Ω</tspan>)</text>
+
+  <!-- body temperature at trial -> sprint, bite -->
+  <rect x="315" y="170" width="145" height="42" rx="6" fill="#F6EFE2" stroke="#8A6D3B" stroke-width="1.5"/>
+  <text x="387" y="196" text-anchor="middle" font-size="13">body temp. at trial</text>
+  <g stroke="#8A6D3B" stroke-width="1.5" fill="none" marker-end="url(#arrow-temp)">
+    <path d="M 387 212 L 387 261"/>
+    <path d="M 460 191 C 510 215, 510 320, 452 349"/>
+  </g>
+  <text x="395" y="242" font-size="14" font-style="italic" fill="#8A6D3B">t</text>
+
+  <!-- morphology -> performance -->
+  <g stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+    <path d="M 215 198 L 303 277"/>
+    <path d="M 215 198 L 303 365"/>
+    <path d="M 215 198 L 303 453"/>
+    <path d="M 215 198 L 303 541"/>
+    <path d="M 215 290 L 303 290"/>
+    <path d="M 215 378 L 303 378"/>
+    <path d="M 215 466 L 303 466"/>
+    <path d="M 215 554 L 303 554"/>
+  </g>
+  <text x="268" y="222" text-anchor="middle" font-size="14" font-style="italic" fill="#333">b<tspan font-size="10" dy="3">svl</tspan></text>
+  <text x="259" y="578" text-anchor="middle" font-size="14" font-style="italic" fill="#333">b<tspan font-size="10" dy="3">shape</tspan></text>
+
+  <!-- survival node -->
+  <ellipse cx="625" cy="418" rx="72" ry="44" fill="#FBE2CB" stroke="#C06A1B" stroke-width="1.5"/>
+  <text x="625" y="413" text-anchor="middle" font-size="14">alive at 6 mo</text>
+  <text x="625" y="433" text-anchor="middle" font-size="14" font-style="italic">zᵢ ~ Bern(φᵢ)</text>
+
+  <!-- performance -> survival -->
+  <g stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+    <path d="M 470 286 L 572 386"/>
+    <path d="M 470 374 L 556 406"/>
+    <path d="M 470 462 L 556 431"/>
+    <path d="M 470 550 L 572 450"/>
+  </g>
+  <text x="508" y="300" text-anchor="middle" font-size="14" font-style="italic" fill="#333">β, q</text>
+
+  <!-- detection nodes -->
+  <g font-size="14" text-anchor="middle">
+    <rect x="780" y="272" width="145" height="56" rx="6" fill="#E6E6E6" stroke="#666" stroke-width="1.5"/>
+    <text x="852" y="295">seen fall 2024</text>
+    <text x="852" y="315" font-style="italic">yᵢ₂</text>
+    <rect x="780" y="508" width="145" height="56" rx="6" fill="#E6E6E6" stroke="#666" stroke-width="1.5"/>
+    <text x="852" y="531">seen spring 2025</text>
+    <text x="852" y="551" font-style="italic">yᵢ₃</text>
+  </g>
+  <g stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+    <path d="M 690 398 L 778 306"/>
+    <path d="M 690 438 L 778 530"/>
+  </g>
+  <text x="742" y="338" font-size="14" font-style="italic" fill="#333">p</text>
+  <text x="742" y="500" font-size="14" font-style="italic" fill="#333">λ</text>
+
+  <!-- direct morphology -> survival (M2 only) -->
+  <path d="M 127 630 C 127 682, 625 687, 625 462" stroke="#B23A3A" stroke-width="1.8" stroke-dasharray="7 5" fill="none" marker-end="url(#arrow-direct)"/>
+  <text x="380" y="680" text-anchor="middle" font-size="13" fill="#B23A3A"><tspan font-style="italic">γ</tspan>: direct morphology → survival (model M2 only)</text>
+
+  <text x="480" y="712" text-anchor="middle" font-size="12" fill="#555">All coefficients are species-specific and partially pooled across species.</text>
+</svg>

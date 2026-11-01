@@ -1,0 +1,23 @@
+---
+title: "5. Synthesis"
+subtitle: "From posterior distributions to biological insight"
+---
+
+::: {.callout-note}
+## In progress
+This page will be filled in after the models are fitted.
+:::
+
+## Planned contents
+
+1. **Direct vs. indirect effects** of each morphological trait on
+   survival, per species: is morphology's effect mediated by
+   performance?
+2. **Morphology → performance**: size and shape effects on sprint, bite
+   and clinging.
+3. **Selection on performance**: survival as a function of each
+   performance trait (linear and quadratic selection).
+4. **Species comparison** and the role of detection: detection-corrected
+   vs. naive survival.
+5. **Interpretation, limitations and next steps**, including claw
+   measurements and heavier-tailed sprint residuals.

@@ -1,7 +1,92 @@
 ---
-title: "morph-perf-surv-lizard-island"
+title: "Start here"
+subtitle: "Does morphology affect survival only through performance?"
 ---
 
-This is a Quarto website.
+This site is the complete, open record of a study of natural selection in
+three *Anolis* lizards on Lizard Island. Every step is here, from the
+cleaned field data to the final biological conclusions: data cleaning
+decisions, model equations, Stan code, validation and model checks. The
+pages are meant to be read in order, but each one stands on its own.
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
+## The question
+
+Many evolutionary studies link morphology directly to survival or
+reproductive success. The **ecomorphological paradigm** proposes a
+middle step instead: morphology determines what an animal can *do*, its
+whole-organism performance, and performance determines whether it
+survives.
+
+```{mermaid}
+%%| fig-cap: "The paradigm being tested. Solid arrows are the mediated path; the dashed arrow is a direct effect of morphology on survival that bypasses measured performance."
+flowchart LR
+  M[Morphology] --> P[Performance] --> S[Survival] --> R[Resighting]
+  M -.-> S
+```
+
+We test two hypotheses:
+
+- **M1, full mediation.** Morphology affects 6-month survival *only*
+  through sprint speed, bite force and clinging ability on bark and on
+  leaves.
+- **M2, partial mediation.** Morphology also affects survival directly,
+  through routes that measured performance does not capture.
+
+## Study system
+
+Lizards were captured, measured, tested for performance and individually
+marked in spring 2024, then resighted in fall 2024 (6 months) and spring
+2025 (12 months). We analyse three species that share the island:
+
+| Species | Abbreviation |
+|---|---|
+| *Anolis carolinensis* | caro |
+| *Anolis cristatellus* | cris |
+| *Anolis sagrei* | sag |
+
+Survival is never observed directly, only resightings. Lizards that are
+alive can be missed, and how often differs among species. The model
+therefore estimates detection probability alongside survival.
+
+## How this site is organised
+
+| Page | What it contains | Status |
+|---|---|---|
+| [1. Data](01-data.qmd) | Data sources, every cleaning decision and its justification, and exploratory plots | Complete |
+| [2. Model](02-model.qmd) | Causal diagram, full mathematical specification, priors and Stan code | Specification complete; Stan code in progress |
+| [3. Validation](03-validation.qmd) | Prior predictive checks and simulation-based calibration | In progress |
+| [4. Fit](04-fit.qmd) | Fitting the models to the data, diagnostics and posterior predictive checks | In progress |
+| [5. Synthesis](05-synthesis.qmd) | Direct vs. indirect effects of morphology, selection on performance, and biological interpretation | In progress |
+
+Code is shown on every page but folded by default; click **Show code**
+to expand any chunk, or use the **Code** menu at the top of a page to
+show all of it.
+
+## Reproducing the analysis
+
+The repository contains everything needed to reproduce the results from
+the cleaned data:
+
+```
+data/        cleaned analysis dataset and capture summary
+R/           shared functions: data preparation, priors, simulator, plot theme
+stan/        Stan model (in progress)
+scripts/     long computations (SBC, model fits), saved to results/
+figures/     static figures (causal diagram)
+*.qmd        the pages of this site
+```
+
+To rebuild the site, clone the repository, install the R packages loaded
+in `R/` and the pages, and run `quarto render`. Heavy computations
+(simulation-based calibration and model fits) are run separately from
+`scripts/`, and their saved outputs are read by the pages.
+
+## Data availability
+
+The analysis uses `data/lizards-spring-2024.csv`, which has one row per
+lizard marked in spring 2024. It includes every correction and exclusion
+as columns (`corrections`, `exclusion`), so each cleaning decision on
+the [Data page](01-data.qmd) can be traced. The raw field data are not
+part of the public repository. The cleaned file is produced from them by
+`R/process-raw-data.R`, which is included so that every cleaning step is
+documented.

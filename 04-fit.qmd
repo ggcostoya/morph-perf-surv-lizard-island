@@ -1,0 +1,21 @@
+---
+title: "4. Fit"
+subtitle: "Fitting the models, diagnostics and posterior predictive checks"
+---
+
+::: {.callout-note}
+## In progress
+This page will be filled in after the model passes validation.
+:::
+
+## Planned contents
+
+1. **Fitting** M1 and M2 to the analysis dataset (computed in
+   `scripts/`, results saved to `results/`).
+2. **Sampler diagnostics**: divergences, $\hat R$, effective sample
+   sizes and energy.
+3. **Parameter summaries** for performance, survival and detection.
+4. **Posterior predictive checks**: resighting histories by species and
+   sex, performance distributions, and leaf censoring rates.
+5. **Model comparison** of M1 and M2 by leave-one-out cross-validation
+   (PSIS-LOO).

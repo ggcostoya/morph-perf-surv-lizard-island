@@ -1,21 +1,52 @@
 project:
   type: website
+  execute-dir: project
+  render:
+    - index.qmd
+    - 01-data.qmd
+    - 02-model.qmd
+    - 03-validation.qmd
+    - 04-fit.qmd
+    - 05-synthesis.qmd
+    - about.qmd
 
 website:
-  title: "morph-perf-surv-lizard-island"
-  navbar:
-    left:
+  title: "Morphology, performance & survival"
+  repo-url: https://github.com/ggcostoya/morph-perf-surv-lizard-island
+  repo-actions: [source, issue]
+  sidebar:
+    style: docked
+    search: true
+    contents:
       - href: index.qmd
-        text: Home
+        text: Start here
+      - href: 01-data.qmd
+        text: 1. Data
+      - href: 02-model.qmd
+        text: 2. Model
+      - href: 03-validation.qmd
+        text: 3. Validation
+      - href: 04-fit.qmd
+        text: 4. Fit
+      - href: 05-synthesis.qmd
+        text: 5. Synthesis
       - about.qmd
+  page-footer:
+    left: "Garcia Costoya · Lizard Island anoles"
+    right: "Built with [Quarto](https://quarto.org)"
 
 format:
   html:
-    theme:
-      - cosmo
-      - brand
+    theme: cosmo
     css: styles.css
     toc: true
+    code-fold: true
+    code-summary: "Show code"
+    code-tools: true
+    fig-width: 8
+    fig-height: 4.5
 
-
-
+execute:
+  freeze: auto
+  warning: false
+  message: false

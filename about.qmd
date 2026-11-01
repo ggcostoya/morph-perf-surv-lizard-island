@@ -2,4 +2,10 @@
 title: "About"
 ---
 
-About this site
+This project is part of Guillermo Garcia Costoya's research on
+natural selection in *Anolis* lizards, advised by James Stroud.
+Fieldwork took place on Lizard Island.
+
+The source code for this site, the cleaned data and the analysis
+scripts are in the
+[GitHub repository](https://github.com/ggcostoya/morph-perf-surv-lizard-island).
