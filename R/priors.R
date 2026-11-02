@@ -9,7 +9,10 @@ priors <- list(
   delta = list(mu_mean = 0, mu_sd = 1, tau_sd = 0.5),
   b_svl = list(mu_mean = 0, mu_sd = 0.5, tau_sd = 0.25),
   b_shape = list(mu_mean = 0, mu_sd = 0.5, tau_sd = 0.25),
-  t = list(mu_mean = 0, mu_sd = 0.5, tau_sd = 0.25),
+  t = list(mu_mean = 0, mu_sd = 0.5, tau_sd = 0.25), # linear temperature
+  # quadratic temperature: t2 = -exp(log_t2), concave as near a TPC optimum;
+  # hierarchical on log curvature, median curvature 0.05
+  log_t2 = list(mu_mean = log(0.05), mu_sd = 0.5, tau_sd = 0.25),
   sigma = list(sd = 1),
   Omega = list(eta = 2),
   # survival

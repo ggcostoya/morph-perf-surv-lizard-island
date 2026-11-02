@@ -1,29 +1,454 @@
 ---
 title: "3. Validation"
-subtitle: "Prior predictive checks and simulation-based calibration"
+subtitle: "The simulator, prior predictive checks and simulation-based calibration"
 ---
+
+```{r}
+#| label: setup
+library(tidyverse)
+source("R/prepare-data.R")
+source("R/priors.R")
+source("R/simulate.R")
+source("R/stan-data.R")
+source("R/plot-theme.R")
+
+lizards <- read_csv("data/lizards-spring-2024.csv", show_col_types = FALSE)
+design <- prepare_data(lizards)
+n_prior <- 1000 # prior predictive draws
+```
+
+Before the model is fitted to the real data, we check two things. First,
+that the priors imply plausible lizards: plausible performance, survival
+and resighting. Second, that the model recovers known parameter values
+from data simulated with them. Both checks use a simulator that
+generates data exactly as the model assumes they arise.
+
+## The simulator
+
+The simulator (`R/simulate.R`) mirrors the model in
+[2. Model](02-model.qmd). It **conditions on the observed study
+design**: every simulated dataset has the same
+`r design$N` lizards, with their real species, sex, morphology, trial
+temperatures and pattern of missing performance trials. Only the
+quantities the model treats as random are simulated.
+
+| Kept from the real data | Simulated |
+|---|---|
+| species and sex | the four performance traits |
+| standardised morphology ($x_{ik}$) | survival to fall 2024 ($z_i$) |
+| standardised trial temperatures ($w_{ij}$) | resighting in fall 2024 and spring 2025 ($y_{i2}, y_{i3}$) |
+| which performance trials are missing | which leaf trials fall below the detection limit |
+| the leaf detection limit on each species' scale ($c_s$) | |
+
+### Workflow
+
+```{mermaid}
+%%| fig-cap: "Simulator workflow. Functions are in `R/`. `simulate_one()` runs the whole chain and returns the true parameter values together with Stan-ready data."
+flowchart LR
+  D[data/lizards-spring-2024.csv] --> PD["prepare_data()"] --> DES[design]
+  PR["priors (R/priors.R)"] --> DP["draw_params()"] --> PAR[true parameters]
+  DES --> SD["simulate_data()"]
+  PAR --> SD
+  SD --> SIM[simulated data] --> MSD["make_stan_data()"] --> STAN[Stan data]
+  PR --> MSD
+```
+
+The functions are:
+
+1. **`prepare_data()`** turns the cleaned dataset into the model's
+   inputs (the design) and the observed outcomes. The same function
+   prepares the real data for fitting, so simulated and real data have
+   identical structure.
+2. **`draw_params()`** draws one set of parameters from the priors.
+   - Species-level parameters are drawn from their across-species
+     distributions, as in the model's hierarchy.
+   - With `direct_effect = TRUE`, it also draws the direct effects
+     $\gamma$ (model M2). Otherwise they are 0 (model M1).
+3. **`simulate_data()`** generates outcomes for the design in four
+   steps.
+   - Performance vectors are drawn from their multivariate normal
+     distributions, including the effect of trial temperature.
+   - Survival is drawn from temperature-adjusted performance (and, in
+     M2, morphology).
+   - Resightings are drawn given survival.
+   - The real missing-data pattern is applied, and leaf values below
+     the detection limit are censored.
+4. **`make_stan_data()`** adds the prior values and model flags,
+   producing the data list for `stan/model.stan`.
+5. **`simulate_one()`** runs steps 2--4 and returns the true parameter
+   values (named as in Stan) along with the Stan data. This is the unit
+   of simulation-based calibration.
+
+```{r}
+#| label: one-draw
+set.seed(2024)
+example <- simulate_one(design, priors, direct_effect = TRUE)
+```
+
+One call produces `r length(example$variables)` true parameter values
+under M2 (fewer under M1, which has no direct effects) and a complete
+Stan data list.
+
+### Self-consistency check
+
+The simulator should generate data that reproduce the parameters used
+to generate them. We test this with a design much larger than the real
+one, so that estimates are precise. The design repeats the
+*A. cristatellus* lizards 40 times (`r format(40 * sum(design$species == 2), big.mark = ",")`
+lizards), with every performance trait observed and no censoring. We
+then fit the two submodels outside Stan:
+
+- **Performance:** each trait is regressed on sex, size, its linked
+  shape trait and trial temperature (linear and squared) by least squares.
+- **Survival and detection:** the history likelihood from
+  [2. Model](02-model.qmd) is maximised directly.
+
+If the simulator and the likelihood agree, the estimates fall close to
+the true values.
+
+```{r}
+#| label: self-consistency
+set.seed(3)
+big <- design
+rows <- rep(which(design$species == 2), 40)
+for (nm in c("species", "male", "y2", "y3", "cens")) big[[nm]] <- design[[nm]][rows]
+for (nm in c("x", "w", "u", "obs")) big[[nm]] <- design[[nm]][rows, , drop = FALSE]
+big$N <- length(rows)
+big$obs[] <- 1L
+big$c_leaf[] <- -Inf
+
+truth <- draw_params(big, priors, direct_effect = TRUE)
+sim <- simulate_data(truth, big)
+m <- big$male
+x <- big$x
+
+# performance: least squares per trait
+perf_check <- map(seq_along(perf_traits), \(j) {
+  X <- cbind(m, x[, "svl"], x[, big$shape[j]])
+  true <- c(truth$alpha[2, j], truth$delta[2, j], truth$b_svl[2, j], truth$b_shape[2, j])
+  names <- c("alpha", "delta", "b_svl", "b_shape")
+  if (j <= ncol(big$w)) {
+    X <- cbind(X, big$w[, j], big$w[, j]^2)
+    true <- c(true, truth$t[2, j], truth$t2[2, j])
+    names <- c(names, "t", "t2")
+  }
+  fit <- summary(lm(sim$u[, j] ~ X))$coefficients
+  tibble(submodel = "performance", parameter = paste0(names, "[", perf_traits[j], "]"),
+         true = true, estimate = fit[, 1], se = fit[, 2])
+}) |>
+  list_rbind()
+
+# survival and detection: maximise the history likelihood
+u_adj <- sim$u
+u_adj[, 1:2] <- sim$u[, 1:2] - sweep(big$w, 2, truth$t[2, ], "*") - sweep(big$w^2, 2, truth$t2[2, ], "*")
+negloglik <- function(th) {
+  phi <- plogis(th[1] + th[2] * m + u_adj %*% th[3:6] + u_adj^2 %*% th[7:10] + x %*% th[11:15])
+  p <- plogis(th[16] + th[17] * m)
+  lambda <- plogis(th[18] + th[19] * m)
+  y2 <- sim$y2
+  y3 <- sim$y3
+  prob <- case_when(
+    y2 == 1 & y3 == 1 ~ phi * p * lambda,
+    y2 == 0 & y3 == 1 ~ phi * (1 - p) * lambda,
+    y2 == 1 & y3 == 0 ~ phi * p * (1 - lambda),
+    TRUE ~ 1 - phi + phi * (1 - p) * (1 - lambda)
+  )
+  -sum(log(prob))
+}
+true_surv <- c(truth$a[2], truth$c[2], truth$beta[2, ], truth$q[2, ], truth$gamma[2, ],
+               truth$pi[2], truth$zeta_p, truth$ell[2], truth$zeta_lambda)
+opt <- optim(rep(0, length(true_surv)), negloglik, method = "BFGS",
+             control = list(maxit = 2000), hessian = TRUE)
+surv_check <- tibble(
+  submodel = "survival & detection",
+  parameter = c("a", "c", paste0("beta[", perf_traits, "]"), paste0("q[", perf_traits, "]"),
+                paste0("gamma[", morph_traits, "]"), "pi", "zeta_p", "ell", "zeta_lambda"),
+  true = true_surv, estimate = opt$par, se = sqrt(diag(solve(opt$hessian)))
+)
+
+check <- bind_rows(perf_check, surv_check) |>
+  mutate(z = (estimate - true) / se)
+```
+
+```{r}
+#| label: fig-self-consistency
+#| fig-cap: "Self-consistency of the simulator for one large simulated dataset. Points are the standardised difference between estimate and true value, (estimate − true) / SE. If the simulator and the likelihood agree, these behave like standard normal draws: most within ±2 (shaded band)."
+#| fig-height: 7
+check |>
+  mutate(parameter = fct_rev(fct_inorder(parameter))) |>
+  ggplot(aes(z, parameter)) +
+  annotate("rect", xmin = -2, xmax = 2, ymin = -Inf, ymax = Inf, fill = "#ecebe8") +
+  geom_vline(xintercept = 0, colour = "#b0afa9", linewidth = 0.4) +
+  geom_point(colour = species_colours[["cris"]], size = 2) +
+  scale_x_continuous(limits = c(-3.5, 3.5)) +
+  facet_grid(submodel ~ ., scales = "free_y", space = "free_y") +
+  labs(x = "(estimate − true) / SE", y = NULL) +
+  theme_lizard() +
+  theme(strip.text.y = element_text(angle = 0, hjust = 0))
+```
+
+Of the `r nrow(check)` parameters, `r sum(abs(check$z) <= 2)` are
+within 2 standard errors of their true values, and the largest deviation is
+`r round(max(abs(check$z)), 1)` SE. The simulator generates data
+consistent with the likelihood it is meant to represent.
+
+## Prior predictive checks
+
+The priors are on the standardised and logit scales described in
+[2. Model](02-model.qmd). It is hard to judge from a prior table alone
+whether they imply sensible lizards. Instead, we simulate
+`r n_prior` datasets from the priors and compare them
+with what was observed. The aim is not to match the data. It is to
+check that the observed data are a plausible outcome under the priors,
+and that the priors do not put much weight on biologically absurd
+outcomes.
+
+```{r}
+#| label: prior-sims
+set.seed(1)
+prior_sims <- map(seq_len(n_prior), \(i) {
+  params <- draw_params(design, priors, direct_effect = TRUE)
+  sim <- simulate_data(params, design)
+  list(params = params, sim = sim, latent = attr(sim, "latent"))
+})
+
+summarise_sim <- function(dat, latent = NULL) {
+  out <- tibble(
+    species = factor(species_levels[dat$species], levels = species_levels),
+    y2 = dat$y2, y3 = dat$y3, cens = dat$cens, obs_leaf = dat$obs[, "leaf"]
+  )
+  if (!is.null(latent)) out <- mutate(out, phi = latent$phi, p = latent$p)
+  out |>
+    group_by(species) |>
+    summarise(
+      `seen fall 2024` = mean(y2),
+      `seen spring 2025` = mean(y3),
+      `naive survival (seen either)` = mean(pmax(y2, y3)),
+      `leaf below detection limit` = sum(cens) / sum(obs_leaf),
+      across(any_of(c("phi", "p")), mean)
+    )
+}
+
+prior_summary <- map(prior_sims, \(d) summarise_sim(d$sim, d$latent)) |>
+  list_rbind(names_to = "draw")
+observed_summary <- summarise_sim(design)
+```
+
+### Resighting and censoring
+
+```{r}
+#| label: fig-prior-observables
+#| fig-cap: "Prior predictive distributions of observable summaries, per species (histograms), with the observed values (vertical lines). The observed values should fall within the bulk of each distribution."
+#| fig-height: 6.5
+observables <- c("seen fall 2024", "seen spring 2025", "naive survival (seen either)", "leaf below detection limit")
+
+prior_summary |>
+  pivot_longer(all_of(observables), names_to = "statistic") |>
+  mutate(statistic = factor(statistic, observables)) |>
+  ggplot(aes(value, fill = species)) +
+  geom_histogram(bins = 40, boundary = 0) +
+  geom_vline(
+    data = observed_summary |>
+      pivot_longer(all_of(observables), names_to = "statistic") |>
+      mutate(statistic = factor(statistic, observables)),
+    aes(xintercept = value), linewidth = 0.7, colour = "#0b0b0b"
+  ) +
+  facet_grid(species ~ statistic, scales = "free", labeller = labeller(species = species_names)) +
+  scale_fill_species(guide = "none") +
+  labs(x = "Proportion of lizards", y = "Prior draws") +
+  theme_lizard() +
+  theme(strip.text.y = element_text(face = "bold.italic"))
+```
+
+```{r}
+#| label: tbl-prior-observables
+#| tbl-cap: "Where the observed values fall in the prior predictive distributions: the percentile of the observed value among prior draws. Values near 0 or 100 would indicate priors in conflict with the data."
+prior_summary |>
+  pivot_longer(all_of(observables), names_to = "statistic") |>
+  left_join(
+    observed_summary |> pivot_longer(all_of(observables), names_to = "statistic", values_to = "observed"),
+    by = c("species", "statistic")
+  ) |>
+  group_by(species, statistic = factor(statistic, observables)) |>
+  summarise(observed = first(observed), percentile = 100 * mean(value <= observed), .groups = "drop") |>
+  mutate(observed = round(observed, 3), percentile = round(percentile)) |>
+  pivot_wider(names_from = species, values_from = c(observed, percentile), names_glue = "{species} {.value}") |>
+  select(statistic, starts_with("caro"), starts_with("cris"), starts_with("sag")) |>
+  knitr::kable()
+```
+
+### Survival and detection probabilities
+
+Prior-implied survival and detection are not observable directly, but
+their prior distributions show what the model assumes before seeing the
+data.
+
+```{r}
+#| label: fig-prior-latent
+#| fig-cap: "Prior distributions of mean 6-month survival probability and fall detection probability per species, averaged over the lizards in the design."
+prior_summary |>
+  select(draw, species, `6-month survival (φ)` = phi, `fall detection (p)` = p) |>
+  pivot_longer(-c(draw, species), names_to = "quantity") |>
+  ggplot(aes(value, fill = species)) +
+  geom_histogram(bins = 40, boundary = 0, alpha = 0.85, position = "identity") +
+  facet_grid(species ~ quantity, labeller = labeller(species = species_names)) +
+  scale_fill_species(guide = "none") +
+  labs(x = "Probability", y = "Prior draws") +
+  theme_lizard() +
+  theme(strip.text.y = element_text(face = "bold.italic"))
+```
+
+### Performance
+
+Performance is standardised within species, so the observed values have
+mean 0 and SD 1 for each trait and species. Simulated performance
+should have the same order of magnitude, without being forced to match
+exactly.
+
+```{r}
+#| label: fig-prior-performance
+#| fig-cap: "Prior predictive SD of each standardised performance trait within species (all lizards, before missingness and censoring). The observed SD is 1 by construction (vertical line). The x-axis is on a log scale."
+perf_sd <- map(prior_sims, \(d) {
+  as_tibble(d$latent$u) |>
+    mutate(species = factor(species_levels[design$species], levels = species_levels)) |>
+    group_by(species) |>
+    summarise(across(all_of(perf_traits), sd))
+}) |>
+  list_rbind(names_to = "draw") |>
+  pivot_longer(all_of(perf_traits), names_to = "trait") |>
+  mutate(trait = factor(trait, perf_traits))
+
+ggplot(perf_sd, aes(value, fill = species)) +
+  geom_histogram(bins = 40, alpha = 0.85, position = "identity") +
+  geom_vline(xintercept = 1, linewidth = 0.7, colour = "#0b0b0b") +
+  scale_x_log10() +
+  facet_grid(species ~ trait, labeller = labeller(species = species_names)) +
+  scale_fill_species(guide = "none") +
+  labs(x = "SD of standardised performance (log scale)", y = "Prior draws") +
+  theme_lizard() +
+  theme(strip.text.y = element_text(face = "bold.italic"))
+```
+
+### Temperature response
+
+The quadratic temperature effect is concave by construction, as near
+the optimum of a thermal performance curve. Prior draws show the range
+of curves this allows within the observed temperatures.
+
+```{r}
+#| label: fig-prior-temperature
+#| fig-cap: "Effect of body temperature on sprint speed (standardised performance, relative to the species' mean test temperature) for *A. cristatellus*, for 100 prior draws, over the observed range of trial temperatures. Curves can rise, level off or decline, but never curve upwards."
+tb <- lizards |>
+  filter(is.na(exclusion), species == "cris", !is.na(tb_sprint)) |>
+  pull(tb_sprint)
+tb_grid <- seq(min(tb), max(tb), length.out = 101)
+w_grid <- (tb_grid - mean(tb)) / sd(tb)
+temp_curves <- map(prior_sims[1:100], \(d) {
+  tibble(tb = tb_grid, effect = d$params$t[2, 1] * w_grid + d$params$t2[2, 1] * w_grid^2)
+}) |>
+  list_rbind(names_to = "draw")
+
+ggplot(temp_curves, aes(tb, effect, group = draw)) +
+  geom_hline(yintercept = 0, colour = "#d9d8d4", linewidth = 0.4) +
+  geom_line(colour = species_colours[["cris"]], alpha = 0.3, linewidth = 0.5) +
+  labs(x = "Body temperature at trial (°C)", y = "Effect on sprint speed (SD)") +
+  theme_lizard()
+```
+
+### Selection on performance
+
+The priors on $\beta$ and $q$ imply a range of shapes for the
+relationship between performance and survival. Curves from individual
+prior draws show what kinds of selection the model considers plausible
+before seeing the data.
+
+```{r}
+#| label: fig-prior-selection
+#| fig-cap: "Survival probability against sprint speed (standardised, at the species mean of the other traits) for an average female *A. cristatellus*, for 100 prior draws."
+u_grid <- seq(-2.5, 2.5, length.out = 101)
+selection_curves <- map(prior_sims[1:100], \(d) {
+  tibble(u = u_grid, phi = plogis(d$params$a[2] + d$params$beta[2, 1] * u + d$params$q[2, 1] * u^2))
+}) |>
+  list_rbind(names_to = "draw")
+
+ggplot(selection_curves, aes(u, phi, group = draw)) +
+  geom_line(colour = species_colours[["cris"]], alpha = 0.3, linewidth = 0.5) +
+  labs(x = "Sprint speed (SD from species mean)", y = "6-month survival probability") +
+  coord_cartesian(ylim = c(0, 1)) +
+  theme_lizard()
+```
+
+```{r}
+#| label: selection-strength
+sel <- map(prior_sims, \(d) {
+  phi <- plogis(d$params$a[2] + d$params$beta[2, 1] * seq(-2, 2, 0.1) + d$params$q[2, 1] * seq(-2, 2, 0.1)^2)
+  tibble(range = max(phi) - min(phi), beta = d$params$beta[2, 1])
+}) |>
+  list_rbind()
+```
+
+Across sprint speeds from 2 SD below to 2 SD above the mean, the median
+prior curve changes survival by `r round(median(sel$range), 2)`. Survival
+changes by more than 0.5 in `r round(100 * mean(sel$range > 0.5))`% of
+draws, and by more than 0.8 in `r round(100 * mean(sel$range > 0.8))`%.
+On the odds scale, the central 90% of the prior for the linear term
+corresponds to odds of survival changing by a factor of
+`r round(exp(quantile(sel$beta, 0.05)), 2)` to
+`r round(exp(quantile(sel$beta, 0.95)), 2)` per SD of sprint speed.
+
+This is generous. In field studies, linear selection gradients are
+typically small, around 0.1--0.2 SD of relative fitness per SD of trait,
+and quadratic gradients are smaller still. The priors on $\beta$ and
+especially $q$ therefore allow stronger selection than is usually found.
+That is conservative in one sense, because the data, not the prior,
+must show that selection is weak. But with few survivors in
+*A. carolinensis* and *A. sagrei* the prior will carry weight, so
+tighter priors on $q$ are worth considering.
+
+### Summary
+
+```{r}
+#| label: prior-summary-numbers
+pct <- prior_summary |>
+  pivot_longer(all_of(observables), names_to = "statistic") |>
+  left_join(
+    observed_summary |> pivot_longer(all_of(observables), names_to = "statistic", values_to = "observed"),
+    by = c("species", "statistic")
+  ) |>
+  group_by(species, statistic) |>
+  summarise(percentile = 100 * mean(value <= first(observed)), .groups = "drop")
+sd_q <- quantile(perf_sd$value, c(0.05, 0.5, 0.95))
+```
+
+- **Observed resighting and censoring rates are plausible.** All 12
+  observed summaries fall between the
+  `r round(min(pct$percentile))`th and `r round(max(pct$percentile))`th
+  percentiles of their prior predictive distributions.
+- **Survival and detection.** The priors allow a wide range of 6-month
+  survival, concentrated below 0.5, and are nearly uniform for fall
+  detection. That is intended: lizards missed in fall but seen in spring
+  2025 should inform detection.
+- **Performance has the right scale.** The within-species SD of
+  simulated performance has a median of `r round(sd_q[2], 2)`, and 90% of
+  draws fall between `r round(sd_q[1], 2)` and `r round(sd_q[3], 2)`,
+  against the observed 1.
+- **Selection priors are generous**, especially for quadratic selection
+  (above). This is the one place where the priors may be revisited
+  before calibration.
+
+## Simulation-based calibration
 
 ::: {.callout-note}
 ## In progress
-This page will be filled in once the Stan model is written. The
-simulator it relies on is already in `R/simulate.R`.
+Simulation-based calibration for M1 and M2 will be added here: rank
+histograms and ECDF difference plots for every parameter, together with
+sampler diagnostics.
 :::
 
-## Planned contents
+## Power to detect direct effects
 
-1. **The simulator.** It conditions on the observed design: species,
-   sex, standardised morphology, trial body temperatures and the
-   observed pattern of missing performance. From that design it draws
-   parameters from the priors (`R/priors.R`), then performance, survival
-   and resightings. Recovery checks confirm that it generates data
-   consistent with the model's likelihood.
-2. **Prior predictive checks.** Simulated resighting rates, naive
-   survival, leaf censoring and performance distributions are compared
-   with the observed data, to confirm the priors are plausible but not
-   restrictive.
-3. **Simulation-based calibration (SBC)** for M1 and M2, shown as rank
-   histograms and ECDF difference plots for every parameter, together
-   with sampler diagnostics.
-4. **Power to detect direct effects.** How often the posterior for
-   $\gamma$ excludes 0 when the true direct effect is biologically
-   meaningful, given the sample sizes.
+::: {.callout-note}
+## In progress
+How often the posterior for $\gamma$ excludes 0 when the true direct
+effect is biologically meaningful, given the sample sizes.
+:::

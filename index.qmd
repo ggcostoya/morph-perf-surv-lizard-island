@@ -53,7 +53,7 @@ therefore estimates detection probability alongside survival.
 | Page | What it contains | Status |
 |---|---|---|
 | [1. Data](01-data.qmd) | Data sources, every cleaning decision and its justification, and exploratory plots | Complete |
-| [2. Model](02-model.qmd) | Causal diagram, full mathematical specification, priors and Stan code | Specification complete; Stan code in progress |
+| [2. Model](02-model.qmd) | Causal diagram, full mathematical specification, priors and Stan code | Complete |
 | [3. Validation](03-validation.qmd) | Prior predictive checks and simulation-based calibration | In progress |
 | [4. Fit](04-fit.qmd) | Fitting the models to the data, diagnostics and posterior predictive checks | In progress |
 | [5. Synthesis](05-synthesis.qmd) | Direct vs. indirect effects of morphology, selection on performance, and biological interpretation | In progress |
@@ -70,7 +70,7 @@ the cleaned data:
 ```
 data/        cleaned analysis dataset and capture summary
 R/           shared functions: data preparation, priors, simulator, plot theme
-stan/        Stan model (in progress)
+stan/        Stan model
 scripts/     long computations (SBC, model fits), saved to results/
 figures/     static figures (causal diagram)
 *.qmd        the pages of this site

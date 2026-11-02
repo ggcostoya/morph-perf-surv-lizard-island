@@ -26,7 +26,7 @@ page is also available.
 
 ## Causal diagram
 
-![Causal structure of the model. Solid arrows are present in both models. The dashed arrow (direct effects $\gamma$) is present only in M2. Sex affects performance ($\delta$), survival ($c$) and detection ($\zeta$). Body temperature at the trial affects sprint and bite ($t$).](figures/causal-diagram.svg){width=100%}
+![Causal structure of the model. Solid arrows are present in both models. The dashed arrow (direct effects $\gamma$) is present only in M2. Sex affects performance ($\delta$), survival ($c$) and detection ($\zeta$). Body temperature at the trial affects sprint and bite, as a quadratic ($t$, $t_2$).](figures/causal-diagram.svg){width=100%}
 
 ## Transformations
 
@@ -71,18 +71,35 @@ $$
 with a mean that depends on size, the linked shape trait, sex and body
 temperature:
 $$
-\mu_{ij} = \alpha_{sj} + \delta_{sj}\, m_i + b^{\text{svl}}_{sj}\, x_{i,\text{svl}} + b^{\text{shape}}_{sj}\, x_{i,k(j)} + t_{sj}\, w_{ij}.
+\mu_{ij} = \alpha_{sj} + \delta_{sj}\, m_i + b^{\text{svl}}_{sj}\, x_{i,\text{svl}} + b^{\text{shape}}_{sj}\, x_{i,k(j)} + t_{sj}\, w_{ij} + t_{2,sj}\, w_{ij}^2.
 $$
 
 - $\alpha_{sj}$ is the expected performance of a female of average size
   and shape, tested at the species' mean temperature.
-- $t_{sj}$ is the effect of body temperature during the trial. It is
-  estimated for sprint and bite only, and fixed at 0 for both
-  clinging traits.
-  Temperature is a condition of the trial, not a trait of the lizard.
-  Survival therefore depends on temperature-adjusted performance,
-  $\tilde u_{ij} = u_{ij} - t_{sj}\, w_{ij}$: the lizard's expected
-  performance at its species' mean test temperature.
+- $t_{sj}$ and $t_{2,sj}$ are the linear and quadratic effects of body
+  temperature during the trial. They are estimated for sprint and bite
+  only, and fixed at 0 for both clinging traits.
+  - Performance follows a thermal performance curve (TPC). The trials
+    cover only a few degrees (28--32.4 °C for sprint, 26.5--33.2 °C for
+    bite), probably below the optimum. A full TPC, with its optimum and
+    critical limits, cannot be estimated from this window.
+  - The quadratic is the local, second-order approximation to the TPC
+    within the observed range. It is **concave by construction**:
+    $t_{2,sj} = -\exp(\kappa_{sj})$, where the log-curvature
+    $\kappa_{sj}$ is hierarchical across species. Performance can
+    therefore level off or decline at the edges of the range, as near a
+    TPC optimum, but never rise at both ends.
+  - This assumes the trials lie near the thermal optimum. On the cool,
+    rising side of a TPC the curve is convex instead. In the raw data
+    the curvature is small and slightly positive for some species (see
+    [1. Data](01-data.qmd)). That is probably driven by a few lizards at
+    the edges of the temperature range, and is not biologically
+    plausible as a U-shaped response.
+  - Temperature is a condition of the trial, not a trait of the lizard.
+    Survival therefore depends on temperature-adjusted performance,
+    $\tilde u_{ij} = u_{ij} - t_{sj}\, w_{ij} - t_{2,sj}\, w_{ij}^2$:
+    the lizard's expected performance at its species' mean test
+    temperature.
 - $\delta_{sj}$ is the male--female difference in performance not
   explained by morphology.
 - $b^{\text{svl}}_{sj}$ and $b^{\text{shape}}_{sj}$ are the size and
@@ -205,6 +222,7 @@ half-normal distribution.
 | $b^{\text{svl}}_{sj}$ | hierarchical | $\mu \sim \mathcal{N}(0, 0.5)$, $\tau \sim \mathcal{N}^+(0, 0.25)$ |
 | $b^{\text{shape}}_{sj}$ | hierarchical | $\mu \sim \mathcal{N}(0, 0.5)$, $\tau \sim \mathcal{N}^+(0, 0.25)$ |
 | $t_{sj}$ (sprint, bite) | hierarchical | $\mu \sim \mathcal{N}(0, 0.5)$, $\tau \sim \mathcal{N}^+(0, 0.25)$ |
+| $t_{2,sj} = -\exp(\kappa_{sj})$ (sprint, bite) | hierarchical on $\kappa$ | $\mu \sim \mathcal{N}(\log 0.05, 0.5)$, $\tau \sim \mathcal{N}^+(0, 0.25)$ |
 | $\sigma_{sj}$ | none | $\mathcal{N}^+(0, 1)$ |
 | $\boldsymbol{\Omega}$ | shared | $\operatorname{LKJ}(2)$ |
 | **Survival** | | |
@@ -239,6 +257,12 @@ The reasoning behind these priors:
   SDs). The quadratic terms are tighter.
 - **Detection intercepts** of $\mathcal{N}(0, 1.5)$ are close to uniform
   on the probability scale.
+- **Temperature curvature** has a prior median of $-0.05$, with 90% of
+  the prior between about $-0.13$ and $-0.02$. At 2 SD from the mean
+  test temperature, the median curvature lowers performance by 0.2 SD,
+  relative to a straight line. A wider first version allowed
+  implausible drops of more than 5 SD at the coolest test temperatures
+  (see [3. Validation](03-validation.qmd)).
 
 Prior predictive checks of these priors are on the
 [Validation page](03-validation.qmd).
@@ -264,9 +288,51 @@ Prior predictive checks of these priors are on the
 
 ## Stan code
 
-::: {.callout-note}
-## In progress
-The Stan implementation will be added here. It will read the same
-priors as the simulator (`R/priors.R`) and use one flag to switch
-between M1 and M2.
+The model is implemented in Stan (`stan/model.stan`) and sampled with
+CmdStan. Its implementation follows the specification above:
+
+- **One file, two models.** The data flag `direct_effect` switches
+  between M1 (0) and M2 (1). Under M1 the direct-effect parameters
+  $\gamma$ have size zero.
+- **Priors are data.** Their values come from `R/priors.R` through
+  `make_stan_data()` in `R/stan-data.R`, the same list the simulator
+  uses, so the model and the simulator cannot drift apart.
+- **Non-centred parameterisation.** Every hierarchical parameter is
+  written as $\theta_s = \mu_\theta + \tau_\theta \tilde\theta_s$. This
+  helps the sampler when the among-species SDs $\tau$ are small, which
+  is likely with only three species.
+- **Missing and censored performance values are parameters.** The
+  observed values, the missing values (`u_mis`) and the censored leaf
+  values (`u_cens`, with upper bound $c_s$) are assembled into one
+  complete performance matrix.
+- **The survival state is summed out.** The latent survival state $z_i$
+  is discrete, so the likelihood uses the probabilities of the four
+  resighting histories (Survival and detection submodel, above) rather
+  than sampling $z_i$.
+- **Vectorised likelihood.** The performance likelihood uses one
+  triangular solve per species, and the history likelihood is computed
+  for all lizards with the same history at once. This version was
+  checked against a lizard-by-lizard version: the two give identical
+  log-densities, and this one runs about 2.4 times faster.
+- **Generated quantities.** The model also returns the residual
+  correlation matrix $\boldsymbol{\Omega}$ and, for each species and
+  morphological predictor, the indirect, direct and total effects on
+  survival (Derived quantities, above).
+
+::: {.content-visible when-format="html"}
+::: {.callout-note collapse="true"}
+## Show the Stan code (`stan/model.stan`)
+
+```{r}
+#| label: stan-code
+#| echo: false
+#| class-output: stan
+cat(readLines("stan/model.stan"), sep = "\n")
+```
+:::
+:::
+
+::: {.content-visible unless-format="html"}
+The full Stan code is in `stan/model.stan` and on the web version of
+this page.
 :::

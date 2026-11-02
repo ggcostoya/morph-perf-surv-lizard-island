@@ -339,14 +339,42 @@ ggplot(temp_long, aes(tb, z, colour = species)) +
 temp_slopes <- temp_long |>
   group_by(trait) |>
   summarise(slope = coef(lm(z ~ tb))[2])
+
+# curvature on the standardised temperature scale used by the model
+temp_curvature <- temp_long |>
+  group_by(trait, species) |>
+  mutate(w = (tb - mean(tb)) / sd(tb)) |>
+  group_by(trait) |>
+  group_modify(\(d, k) {
+    fit <- summary(lm(z ~ species * w + I(w^2), data = d))$coefficients["I(w^2)", ]
+    tibble(curvature = fit[1], se = fit[2])
+  })
+curv <- \(trait, col) round(temp_curvature[[col]][temp_curvature$trait == trait], 2)
 ```
 
 Within species and sex, sprint speed increases with temperature (pooled
 slope `r round(temp_slopes$slope[temp_slopes$trait == "Sprint speed"], 2)`
 SD per °C). Bite force increases clearly only in *A. carolinensis*.
+
 Temperature therefore enters the model as a predictor of sprint and
-bite. Over this narrow range of temperatures a linear effect is
-adequate.
+bite. Performance is expected to follow a thermal performance curve
+(TPC), which rises to an optimum and then falls steeply. The trials
+cover only a few degrees, probably below the optimum for these species,
+so the optimum and critical limits of a full TPC cannot be estimated.
+The model instead uses a quadratic in temperature, the local
+approximation to a TPC within the observed range. The quadratic is
+constrained to be concave, so performance can level off or decline at
+the edges of the range but never rise at both ends.
+
+Unconstrained, the curvature in the data is small and slightly
+positive. On the standardised temperature scale, the quadratic term is
+`r curv("Sprint speed", "curvature")` ± `r curv("Sprint speed", "se")`
+SE for sprint and `r curv("Bite force", "curvature")` ±
+`r curv("Bite force", "se")` SE for bite. In *A. sagrei* an
+unconstrained quadratic even rises at both the coolest and the warmest
+temperatures. With few lizards at the edges of the range, this U-shape
+is not a credible thermal response, which is why the model imposes
+concavity (see [2. Model](02-model.qmd)).
 
 ## Survival and resighting
 

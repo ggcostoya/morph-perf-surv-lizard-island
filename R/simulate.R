@@ -54,6 +54,7 @@ draw_params <- function(design, priors, direct_effect = FALSE) {
   b_svl <- draw_hier(S, J, priors$b_svl)
   b_shape <- draw_hier(S, J, priors$b_shape)
   t <- draw_hier(S, J_t, priors$t)
+  log_t2 <- draw_hier(S, J_t, priors$log_t2)
   a <- draw_hier(S, 1, priors$a)
   c <- draw_hier(S, 1, priors$c)
   beta <- draw_hier(S, J, priors$beta)
@@ -68,6 +69,7 @@ draw_params <- function(design, priors, direct_effect = FALSE) {
     mu_b_svl = b_svl$mu, tau_b_svl = b_svl$tau, b_svl = b_svl$value,
     mu_b_shape = b_shape$mu, tau_b_shape = b_shape$tau, b_shape = b_shape$value,
     mu_t = t$mu, tau_t = t$tau, t = t$value,
+    mu_log_t2 = log_t2$mu, tau_log_t2 = log_t2$tau, t2 = -exp(log_t2$value),
     sigma = matrix(abs(rnorm(S * J, 0, priors$sigma$sd)), S, J),
     Omega = rlkjcorr(J, priors$Omega$eta),
     # survival
@@ -106,7 +108,8 @@ simulate_data <- function(params, design) {
 
   # performance: u_i ~ MVN(mu_i, Sigma_s)
   temp <- matrix(0, N, J)
-  temp[, temp_cols] <- params$t[s, , drop = FALSE] * design$w
+  temp[, temp_cols] <- params$t[s, , drop = FALSE] * design$w +
+    params$t2[s, , drop = FALSE] * design$w^2
   mu <- params$alpha[s, , drop = FALSE] +
     params$delta[s, , drop = FALSE] * m +
     params$b_svl[s, , drop = FALSE] * x[, "svl"] +
@@ -142,13 +145,17 @@ simulate_data <- function(params, design) {
   u_obs[design$obs == 0] <- 0
   u_obs[cens == 1, leaf] <- 0
 
-  modifyList(design, list(u = u_obs, cens = cens, y2 = y2, y3 = y3))
+  out <- modifyList(design, list(u = u_obs, cens = cens, y2 = y2, y3 = y3))
+  # unobserved quantities, kept for checks (not passed to Stan)
+  attr(out, "latent") <- list(u = u, u_adj = u_adj, phi = plogis(eta), z = z, p = p, lambda = lambda)
+  out
 }
 
 ## One SBC draw: true parameters + model-ready data ----
 
-# Matches SBC::SBC_generator_function(); wrap variables in
-# posterior::as_draws_matrix(t(...)) when running with SBC.
+# Matches SBC::SBC_generator_function(); `generated` is ready-made Stan
+# data (R/stan-data.R). Wrap variables in posterior::as_draws_matrix(t(...))
+# when running with SBC.
 simulate_one <- function(design, priors, direct_effect = FALSE) {
   params <- draw_params(design, priors, direct_effect)
   generated <- simulate_data(params, design)
@@ -161,5 +168,5 @@ simulate_one <- function(design, priors, direct_effect = FALSE) {
   omega <- stan_flatten(params$Omega, "Omega")
   variables <- c(variables, omega[lower.tri(params$Omega)])
 
-  list(variables = variables, generated = generated)
+  list(variables = variables, generated = make_stan_data(generated, priors, direct_effect))
 }

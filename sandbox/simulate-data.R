@@ -9,6 +9,7 @@ library(tidyverse)
 source("R/prepare-data.R")
 source("R/priors.R")
 source("R/simulate.R")
+source("R/stan-data.R")
 
 ## Test ----
 

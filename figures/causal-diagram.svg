@@ -75,7 +75,7 @@
     <path d="M 387 212 L 387 261"/>
     <path d="M 460 191 C 510 215, 510 320, 452 349"/>
   </g>
-  <text x="395" y="242" font-size="14" font-style="italic" fill="#8A6D3B">t</text>
+  <text x="395" y="242" font-size="14" font-style="italic" fill="#8A6D3B">t, t₂</text>
 
   <!-- morphology -> performance -->
   <g stroke="#333" stroke-width="1.5" fill="none" marker-end="url(#arrow)">

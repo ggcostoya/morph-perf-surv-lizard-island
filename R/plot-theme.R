@@ -1,7 +1,8 @@
-# Shared plot styling. Species colours are the first three slots of a
-# colour-blind-safe categorical palette (validated for all pairs).
+# Shared plot styling. Species colours are R's named colours seagreen3
+# (caro), darkorange (cris) and brown (sag); all pairs stay distinguishable
+# under common colour-vision deficiencies.
 
-species_colours <- c(caro = "#2a78d6", cris = "#eb6834", sag = "#1baf7a")
+species_colours <- c(caro = "seagreen3", cris = "darkorange", sag = "brown")
 species_names <- c(
   caro = "A. carolinensis",
   cris = "A. cristatellus",
